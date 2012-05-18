@@ -9,3 +9,4 @@ defs.stim_redo = 0;
 defs.stim_size = [];
 defs.studydir = [];
 defs.expdir = [];
+defs.savedata = 1;

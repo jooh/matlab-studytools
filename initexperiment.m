@@ -46,13 +46,23 @@ if madedir || ~exist(submat,'file')
     pr(sprintf('initialised new experiment in %s',expdir));
     par.sessionI = 1;
     subdata = struct('par',{},'testtime',{},...
-        'randstate',{},'res',{},'notes',{});
+        'res',{},'notes',{});
 else
     subdata = loadbetter(submat);
     par.sessionI = length(subdata)+1;
 end
+
+% Set randomisation
+if ~isempty(par.randstate)
+    rand('state',par.randstate);
+    pr(sprintf('predetermined randstate: %f',par.randstate));
+else
+    par.randstate = sum(100*clock);
+    rand('state',par.randstate);
+    pr(sprintf('independent randstate: %s',par.randstate));
+end
+
 subdata(par.sessionI).par = par;
 subdata(par.sessionI).testtime = datestr(now);
-subdata(par.sessionI).randstate = par.randstate;
 subdata(par.sessionI).expdir = expdir;
 % (res and notes get filled in at the end)
