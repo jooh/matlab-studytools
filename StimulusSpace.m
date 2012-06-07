@@ -241,29 +241,37 @@ classdef StimulusSpace < hgsetget
             end
         end
 
-        function refhist = makeaveragehistogram(self)
-        % Populate the referencehist property with the average of the images.
-        % avghist = makeaveragehistogram()
-            sizes = cell2mat(cellfun(@size,{self.stimulus.image}',...
+        function refhist = makeaveragehistogram(self,target)
+        % Populate the referencehist property with the average of the
+        % images (or optionally, some other stimulus field defined in
+        % target).
+        % avghist = makeaveragehistogram([target])
+            if ieNotDefined('target')
+                target = 'image';
+            end
+            sizes = cell2mat(cellfun(@size,{self.stimulus.(target)}',...
                 'uniformoutput',false));
-            assert(~any(logical(std(sizes,1))),'image sizes must match')
+            assert(~any(logical(std(sizes,1))),'sizes must match')
             refhist = averageandscaleHistograms(...
-                {self.stimulus.image});
+                {self.stimulus.(target)});
             self.referencehist = refhist;
         end
 
-        function imposehistogram(self,refhist)
+        function imposehistogram(self,refhist,target)
         % apply a refhist (default self.referencehist) to each image in
-        % stimulus.image.
-        % imposehistogram([refhist])
+        % stimulus.image, or another attribute as defined in target.
+        % imposehistogram([refhist],[target])
             if ieNotDefined('refhist')
                 assert(~isempty(self.referencehist),...
                     'no refhist supplied and no self.referencehist available.')
                 refhist = self.referencehist;
             end
+            if ieNotDefined('target')
+                target = 'image';
+            end
             for im = 1:self.nstim
-                self.stimulus(im).image = imposeHistogram(...
-                    self.stimulus(im).image,self.referencehist,1:256);
+                self.stimulus(im).(target) = imposeHistogram(...
+                    self.stimulus(im).(target),self.referencehist,1:256);
             end
         end
 
