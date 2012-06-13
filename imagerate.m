@@ -1,8 +1,8 @@
 % Present images in a figure window and ask subject to rate by key presses.
 % res = imagerate(imagestruct,options)
-function res = imagerate(imagestruct,options)
+function res = imagerate(imagestruct,items,options)
 
-nitems = length(options.items);
+nitems = length(items);
 nimages = length(imagestruct);
 ntrials = nitems*nimages*options.nrepeats;
 
@@ -26,7 +26,7 @@ ax = subplot(3,3,5);
 validkeys = 1:options.noptions;
 
 for t = 1:ntrials
-    item = options.items(res.itemorder(t));
+    it = items(res.itemorder(t));
     im = imagestruct(res.imageorder(t)).image;
     if isfield(imagestruct,'alpha')
         alpha = imagestruct(res.imageorder(t)).alpha;
@@ -34,16 +34,16 @@ for t = 1:ntrials
         alpha = 1;
     end
 
-    if isfield(imagestruct,'scramble')
+    try
         scramble = imagestruct(res.imageorder(t)).scramble;
-    else
+    catch
         scramble = uint8(255*rand(size(im)));
     end
 
     h = imshow(im);
     set(h,'alphadata',alpha);
-    title({item.question,sprintf('(1 = %s, %d = %s)',item.label_low,...
-        options.noptions,item.label_high)})
+    title({it.question,sprintf('(1 = %s, %d = %s)',it.label_low,...
+        options.noptions,it.label_high)})
     drawnow;
     ok = 0;
     while ~ok
@@ -51,13 +51,13 @@ for t = 1:ntrials
         if keydown==1
             key = str2num(get(F,'currentcharacter'));
             if ~isempty(key) && any(key==validkeys)
-                if item.scoring < 0
+                if it.scoring < 0
                     % reverse scoring
                     res.response(t) = options.noptions - (key-1);
                 else
                     res.response(t) = key;
                 end
-                res.itemcat(t) = abs(item.scoring);
+                res.itemcat(t) = abs(it.scoring);
                 ok = 1;
             end
         end
