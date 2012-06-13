@@ -221,23 +221,26 @@ classdef StimulusSpace < hgsetget
             imageaxes(ax,Y,{self.stimulus.image},alph);
         end
 
-        function adjustcontrast(self,low,high)
-        % Use Matlab's imadjust tool to adjust contrast of images. This tends
-        % to make the intensities more homogeneous and is a useful first step
-        % before histogram equalisation. low (default .05) and high (default .95)
-        % defines clipping values (applied indiscriminately to each RGB
-        % channel).
-        % adjustcontrast(low,high)
+        function adjustcontrast(self,low,high,target)
+        % Use Matlab's imadjust tool to adjust contrast of images. This
+        % tends to make the intensities more homogeneous and is a useful
+        % first step before histogram equalisation. low (default .05) and
+        % high (default .95) defines clipping values (applied
+        % indiscriminately to each RGB channel).
+        % adjustcontrast(low,high,[target])
             if ieNotDefined('low')
                 low = .05;
             end
             if ieNotDefined('high')
                 high = .95;
             end
+            if ieNotDefined('target')
+                target = 'image';
+            end
             for im = 1:self.nstim
-                self.stimulus(im).image = imadjust(...
-                    self.stimulus(im).image,repmat([low; high],...
-                    1,size(self.stimulus(im).image,3)),[]);
+                self.stimulus(im).(target) = imadjust(...
+                    self.stimulus(im).(target),repmat([low; high],...
+                    1,size(self.stimulus(im).(target),3)),[]);
             end
         end
 
@@ -276,13 +279,15 @@ classdef StimulusSpace < hgsetget
         end
 
         function imagestruct = exportimages(self,imsize)
-        % export images to a struct array with an image field and (if present
-        % in self.stimulus) an alpha field. Why not just do imagestruct =
-        % self.stimulus? Because this way you can get the images out in a given
-        % (consistent) size without changing the contents of self.stimulus.
+        % export images to a struct array with an image field and (if
+        % present in self.stimulus) an alpha field. Why not just do
+        % imagestruct = self.stimulus? Because this way you can get the
+        % images out in a given (consistent) size without changing the
+        % contents of self.stimulus.
         % imagestruct = exportimages([imsize])
             if self.hasalpha
-                imagestruct = struct('image',{self.stimulus.image},'alpha',...
+                imagestruct = struct('image',...
+                    {self.stimulus.image},'alpha',...
                     {self.stimulus.alpha});
             else
                 imagestruct = struct('image',{self.stimulus.image});
@@ -290,8 +295,8 @@ classdef StimulusSpace < hgsetget
             ifn = fieldnames(imagestruct)';
             for im = 1:self.nstim
                 for f = ifn
-                    imagestruct(im).(f{1}) = imresize(imagestruct(im).(f{1}),...
-                        imsize);
+                    imagestruct(im).(f{1}) = imresize(...
+                        imagestruct(im).(f{1}),imsize);
                 end
             end
         end
