@@ -1,15 +1,20 @@
 % Generate a random set of 1:x indices with a fixed n. If n>x, we go
 % through the randomisation multiple times, ensuring that no indices
-% repeat. If n<x, we pick a random subset without repetition. 
-% Note that I use a while loop to find a sequence without repeats, so if
-% you enter sufficiently pathological values you can trigger an
-% exception (try randpermrep(2,200)).
-% v = randpermrep(x,n)
-function v = randpermrep(x,n)
+% repeat. If n<x, we pick a random subset. If allowrepeats==0 (default 1),
+% we resample until we get a sequence with no direct repeats.  Note that I
+% use a while loop to find a sequence without repeats, so if you enter
+% sufficiently pathological values you can trigger an exception (try
+% randpermrep(2,200,0)).
+% v = randpermrep(x,n,[allowrepeats])
+function v = randpermrep(x,n,allowrepeats)
 
 if ieNotDefined('n')
     % Revert to stock randperm behaviour
     n = x;
+end
+
+if ieNotDefined('allowrepeats')
+    allowrepeats = 1;
 end
 
 nrep = ceil(n/x);
@@ -20,8 +25,9 @@ while niter<10e3
         'uniformoutput',false));
     % Trim off remainder
     v = v(1:n);
-    % Return if sequence contained no direct repeats
-    if ~any(diff(v)==0)
+    % Return if sequence contained no direct repeats (or if repeats are
+    % allowed)
+    if ~any(diff(v)==0) || allowrepeats
         return
     end
     niter = niter+1;
