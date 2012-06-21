@@ -260,7 +260,7 @@ classdef StimulusSpace < hgsetget
             self.referencehist = refhist;
         end
 
-        function imposehistogram(self,refhist,target)
+        function imposehistogram(self,target,referencehist)
         % apply a refhist (default self.referencehist) to each image in
         % stimulus.image, or another attribute as defined in target.
         % imposehistogram([refhist],[target])
