@@ -14,7 +14,7 @@ display('Configuring experiment...')
 % Keyboard
 KbName('UnifyKeyNames');
 conf.spacebar = KbName('space');
-conf.esc = KbNAme('escape');
+conf.esc = KbName('escape');
 
 % Location specific display settings, Keithley config
 switch lower(location)
@@ -33,10 +33,7 @@ switch lower(location)
 		conf.totdist = 500;
 		conf.screenwidth = 380;
 
-        conf.respa = KbName('1');
-        conf.respb = KbName('2');
-        conf.respc = KbName('3');
-        conf.respd = KbName('4');
+        conf.respkeys = KbName({'v','b','n','m'});
 
         conf.logfun = @logrespkeyboard;
 
@@ -67,10 +64,7 @@ switch lower(location)
 		conf.totdist = 823+90; % distance to screen in mm
 		conf.screenwidth = 268;
 
-        conf.respa = 28;
-        conf.respb = 26;
-        conf.respc = 24;
-        conf.respd = 22;
+        conf.respkeys = [28 26 24 22];
 
         conf.logfun = @logrespbuttonbox;
 end
@@ -118,10 +112,7 @@ conf.txtwrap = 50;
 Screen('TextFont',conf.window, 'Tahoma');
 Screen('TextSize',conf.window, 14);
 Screen('TextStyle', conf.window, 0);
-
-% No longer used
-conf.fontsizeinst = 14;
-conf.fontsizefix = 8;
+conf.vspacing = 1.5;
 
 % Timing precision in s
 conf.prec = 0.0001;
