@@ -1,4 +1,5 @@
 % Log any keyboard responses matching respkey for waitdur s
+% [resptime,respcode] = logrespkeyboard(waitdur,respkey,esckey,ScanObj);
 function [resptime,respcode] = logrespkeyboard(waitdur,respkey,esckey,ScanObj);
 
 resptime = NaN;
@@ -14,9 +15,10 @@ while GetSecs < t_in + waitdur
         if ~isempty(hit)
             resp = GetSecs;
             % Only log if first response
-            if ~isnan(resptime)
+            if isnan(resptime)
                 resptime = resp;
                 respcode = k;
+                return
             end
         elseif k == esckey
             Screen('CloseAll')

@@ -1,4 +1,5 @@
 % Log any buttonbox responses matching respkey for waitdur s
+% [resptime,respcode] = logrespkeyboard(waitdur,respkey,esckey,ScanObj);
 function [resptime,respcode] = logrespkeyboard(waitdur,respkey,esckey,ScanObj);
 
 resptime = NaN;
