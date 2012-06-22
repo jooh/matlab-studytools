@@ -303,5 +303,14 @@ classdef StimulusSpace < hgsetget
                 end
             end
         end
+
+        function mapmethod(self,commandstr)
+        % use eval to call ss.stimulus(x).(commandstr) for x in ss.nstim.
+        % does not support outputs at present. Mainly useful for updating
+        % figure objects.
+        % mapmethod(self,commandstr)
+            cmd = @(x) eval(['self.stimulus(' num2str(x) ').' commandstr]);
+            arrayfun(cmd,1:self.nstim);
+        end
     end
 end
