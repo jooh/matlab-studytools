@@ -16,7 +16,7 @@ studydir = fileparts(which(expname));
 % These are the stock settings
 defs.verbose = 1;
 defs.subject = [];
-defs.randstate = [];
+defs.randseed = [];
 defs.stim_redo = 0;
 defs.stim_size = [];
 defs.studydir = studydir;
@@ -57,14 +57,14 @@ else
 end
 
 % Set randomisation
-if ~isempty(par.randstate)
-    rand('state',par.randstate);
-    pr(sprintf('predetermined randstate: %f',par.randstate));
+if isempty(par.randseed)
+    par.randseed = sum(100*clock);
+    pr(sprintf('new randseed: %f',par.randseed));
 else
-    par.randstate = sum(100*clock);
-    rand('state',par.randstate);
-    pr(sprintf('independent randstate: %s',par.randstate));
+    pr(sprintf('predetermined randseed: %f',par.randseed));
 end
+s = RandStream.create('mt19937ar','seed',par.randseed);
+RandStream.setDefaultStream(s);
 
 subdata(par.sessionI).par = par;
 subdata(par.sessionI).testtime = datestr(now);
