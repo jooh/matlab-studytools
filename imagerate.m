@@ -69,7 +69,7 @@ for t = 1:ntrials
     set(h,'alphadata',alpha);
     drawnow;
     % iti
-    pause(1+rand(1));
+    pause(.5+rand(1));
     cla;
 end
 close(F);
