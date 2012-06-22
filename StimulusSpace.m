@@ -278,19 +278,22 @@ classdef StimulusSpace < hgsetget
             end
         end
 
-        function imagestruct = exportimages(self,imsize)
-        % export images to a struct array with an image field and (if
-        % present in self.stimulus) an alpha field. Why not just do
-        % imagestruct = self.stimulus? Because this way you can get the
-        % images out in a given (consistent) size without changing the
-        % contents of self.stimulus.
-        % imagestruct = exportimages([imsize])
+        function imagestruct = exportimages(self,imsize,target)
+        % export images to a struct array with an image field (target
+        % defaults to image) and (if present in self.stimulus) an alpha
+        % field. Why not just do imagestruct = self.stimulus? Because this
+        % way you can get the images out in a given (consistent) size
+        % without changing the contents of self.stimulus.
+        % imagestruct = exportimages([imsize],[target])
+            if ieNotDefined('target')
+                target = 'image';
+            end
             if self.hasalpha
                 imagestruct = struct('image',...
-                    {self.stimulus.image},'alpha',...
+                    {self.stimulus.(target)},'alpha',...
                     {self.stimulus.alpha});
             else
-                imagestruct = struct('image',{self.stimulus.image});
+                imagestruct = struct('image',{self.stimulus.(target)});
             end
             ifn = fieldnames(imagestruct)';
             for im = 1:self.nstim

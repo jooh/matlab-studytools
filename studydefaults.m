@@ -1,4 +1,5 @@
 % Return the global studytools defaults
+% DEPRECATED
 function defs = studydefaults()
 
 % These are the stock settings

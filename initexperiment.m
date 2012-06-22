@@ -10,13 +10,17 @@ st = dbstack;
 expname = st(2).name;
 studydir = fileparts(which(expname));
 
-% load study defaults
-defsfn = fullfile(studydir,'defaults.mat');
-assert(exist(defsfn,'file')>0,sprintf('no defaults file %s',defsfn))
-defs = loadbetter(defsfn);
 % Set any non-standard parameters. NB adding new parameters here will raise an
 % error. Use your studydefaults wrapper function to re-define defaults.mat if
 % you want to add support for a new argument.
+% These are the stock settings
+defs.verbose = 1;
+defs.subject = [];
+defs.randstate = [];
+defs.stim_redo = 0;
+defs.stim_size = [];
+defs.studydir = studydir;
+defs.savedata = 1;
 par = varargs2structfields(varargin{1},defs,defs.verbose);
 
 % print functionality depends on verbosity

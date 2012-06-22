@@ -65,7 +65,8 @@ for t = 1:ntrials
         pause(1e-5);
     end
     cla;
-    imshow(scramble);
+    h=imshow(scramble);
+    set(h,'alphadata',alpha);
     drawnow;
     % iti
     pause(1+rand(1));
