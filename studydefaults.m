@@ -5,7 +5,7 @@ function defs = studydefaults()
 % These are the stock settings
 defs.verbose = 1;
 defs.subject = [];
-defs.randstate = [];
+defs.randseed = [];
 defs.stim_redo = 0;
 defs.stim_size = [];
 defs.studydir = [];
