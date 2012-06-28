@@ -19,7 +19,7 @@ end
 
 nrep = ceil(n/x);
 niter = 0;
-while niter<10e3
+while niter<10e4
     % Repeat randperm however many times are needed
     v = cell2mat(arrayfun(@randperm,repmat(x,1,nrep),...
         'uniformoutput',false));
