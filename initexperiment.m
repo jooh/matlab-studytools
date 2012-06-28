@@ -6,9 +6,10 @@ function [subdata pr] = initexperiment(varargin)
 dbstop if error
 
 % find the calling function's name, use this to define paths
-st = dbstack;
-expname = st(2).name;
-studydir = fileparts(which(expname));
+[expname,studydir] = namepath(2);
+%st = dbstack;
+%expname = st(2).name;
+%studydir = fileparts(which(expname));
 
 % Set any non-standard parameters. NB adding new parameters here will raise an
 % error. Use your studydefaults wrapper function to re-define defaults.mat if
