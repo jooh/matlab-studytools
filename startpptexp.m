@@ -72,6 +72,13 @@ end
 
 %% PPT Setups
 resolution = [1024 768];
+% On any recent Mac OS version, PPT works very poorly at the moment
+if ismac
+    Screen('Preference','SkipSyncTests',1);
+else
+    Screen('Preference','SkipSyncTests',0);
+end
+
 if windowed
 	re = [20 20 resolution];
 	% Don't change resolution
