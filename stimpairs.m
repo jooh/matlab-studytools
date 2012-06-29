@@ -43,7 +43,8 @@ end
 
 % figure out stim indices
 % Construct xy indices for each pair
-% (so AB pairs are below the diagonal and BA pairs are above)
+% get only lower off diagonals (so [2:15] : [1:14]). Note that this creates
+% left-right dependencies
 stiminds = 1:nstim;
 [stim.x, stim.y] = meshgrid(stiminds,stiminds);
 for p = fieldnames(stim)'
@@ -51,6 +52,7 @@ for p = fieldnames(stim)'
     stim.(p{1}) = nonzeros(tril(stim.(p{1}),-1));
 end
 % Construct xy indices for each pair of pairs
+%get only lower off diagonals: this creates up/down dependencies
 pairinds = 1:npairs;
 [pair.above,pair.below] = meshgrid(pairinds,pairinds);
 for p = fieldnames(pair)'
@@ -59,7 +61,10 @@ for p = fieldnames(pair)'
 end
 
 % Construct non-repeating trial sequence
-trialinds = randpermrep(npofp,ntrials,0);
+res.trialinds = randpermrep(npofp,ntrials,0);
+% offset left/right biases by randomising
+res.leftrightinds = reshape(randpermrep(2,ntrials*2,1),[2 ntrials]);
+res.updowninds = randpermrep(2,ntrials,1);
 % Setup logs
 res.trials.abovestim = NaN([2 ntrials]);
 res.trials.belowstim = NaN([2 ntrials]);
@@ -144,8 +149,25 @@ try
     for t = 1:ntrials
         timing.tstart = GetSecs;
         % current trial stims
-        above = pair.above(trialinds(t));
-        below = pair.below(trialinds(t));
+        above = pair.above(res.trialinds(t));
+        below = pair.below(res.trialinds(t));
+        doupdownflip = res.updowninds(t)==2;
+        doleftrightflip = res.leftrightinds(:,t)==2;
+        stimoptions.trialrect = stimoptions.rects.vec;
+        if doleftrightflip(1)
+            stimoptions.trialrect(:,1) = stimoptions.rects.topright';
+            stimoptions.trialrect(:,2) = stimoptions.rects.topleft';
+        end
+        if doleftrightflip(2)
+            stimoptions.trialrect(:,3) = stimoptions.rects.bottomright';
+            stimoptions.trialrect(:,4) = stimoptions.rects.bottomleft';
+        end
+        if doupdownflip
+            stimoptions.trialrect = [stimoptions.rects.bottomleft; ...
+                stimoptions.rects.bottomright;...
+                stimoptions.rects.topleft; ...
+                stimoptions.rects.topright]'; 
+        end
         res.trials.abovestim(:,t) = [stim.x(above); stim.y(above)];
         res.trials.belowstim(:,t) = [stim.x(below); stim.y(below)];
         % present stimuli
@@ -157,9 +179,12 @@ try
                 res.trials.abovestim(2,t),res.trials.belowstim(1,t),...
                 res.trials.belowstim(2,t));
         end
-        res.trials.choseabove(t) = stimfun(tex.stim(...
+        resp = stimfun(tex.stim(...
             [res.trials.abovestim(:,t); res.trials.belowstim(:,t)],:),...
             ppt,stimoptions) == ppt.respkeys(1);
+        res.trials.choseabove(t) = ...
+            (resp==ppt.respkeys(1) && ~doupdownflip) || ...
+            (resp==ppt.respkeys(2) && doupdownflip);
         % score as dissimilarity
         if res.trials.choseabove(t)
             winner = 'belowstim';
@@ -238,7 +263,7 @@ while isnan(resp)
     fstart = GetSecs;
     for f = [1:stimoptions.nframes stimoptions.nframes-1:-1:2]
         Screen('DrawTextures',ppt.window,bufinds(:,f),[],...
-            stimoptions.rects.vec);
+            stimoptions.trialrect);
         % check for a response once per frame 
         [resptime,resp] = ppt.logfun(0.02,ppt.respkeys,ppt.esc,ppt.ScanObj);
         Screen('Flip',ppt.window,fstart+f*frametime);
