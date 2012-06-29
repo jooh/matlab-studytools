@@ -51,6 +51,7 @@ for p = fieldnames(stim)'
     % lower triangular form
     stim.(p{1}) = nonzeros(tril(stim.(p{1}),-1));
 end
+% TODO - randomise x/y assignment to break dependency
 % Construct xy indices for each pair of pairs
 %get only lower off diagonals: this creates up/down dependencies
 pairinds = 1:npairs;
@@ -59,6 +60,9 @@ for p = fieldnames(pair)'
     % lower triangular
     pair.(p{1}) = nonzeros(tril(pair.(p{1}),-1));
 end
+% TODO - randomise above/below assignment
+% should not need ugly random on-line code after this change
+keyboard;
 
 % Construct non-repeating trial sequence
 res.trialinds = randpermrep(npofp,ntrials,0);
@@ -72,11 +76,14 @@ res.trials.belowstim = NaN([2 ntrials]);
 res.wincount = zeros(nstim);
 % 1 above, 2 below
 res.trials.choseabove = NaN([1 ntrials]);
+% not used but useful as I can't be trusted to score the above correctly.
+res.trials.resp = NaN([1 ntrials]);
+
 % scramble ids 
 res.trials.itiscrambles = reshape(stiminds(randpermrep(nstim,ntrials*4,...
     1)),[4 ntrials]);
 res.trials.onset = NaN([1 ntrials]);
-res.phase_off = 2;
+res.phase_off = 1;
 
 instruct_txt = ['You will see one pair of faces in the upper half of '...
     'the screen, and one pair in the lower half. Use the response key '...
@@ -179,12 +186,12 @@ try
                 res.trials.abovestim(2,t),res.trials.belowstim(1,t),...
                 res.trials.belowstim(2,t));
         end
-        resp = stimfun(tex.stim(...
+        res.trials.resp(t) = stimfun(tex.stim(...
             [res.trials.abovestim(:,t); res.trials.belowstim(:,t)],:),...
-            ppt,stimoptions) == ppt.respkeys(1);
+            ppt,stimoptions);
         res.trials.choseabove(t) = ...
-            (resp==ppt.respkeys(1) && ~doupdownflip) || ...
-            (resp==ppt.respkeys(2) && doupdownflip);
+            (res.trials.resp(t)==ppt.respkeys(1) && ~doupdownflip) || ...
+            (res.trials.resp(t)==ppt.respkeys(2) && doupdownflip);
         % score as dissimilarity
         if res.trials.choseabove(t)
             winner = 'belowstim';
