@@ -78,6 +78,9 @@ res.rdm = zeros(nstim);
 res.rdm_n = res.rdm;
 % 1 above, 2 below (no rescoring - this is what the choice was)
 res.trials.choseabove = NaN([1 ntrials]);
+% not used but useful as I can't be trusted to score the above correctly.
+res.trials.resp = NaN([1 ntrials]);
+
 % scramble ids 
 res.trials.itiscrambles = reshape(stiminds(randpermrep(nstim,ntrials*4,...
     1)),[4 ntrials]);

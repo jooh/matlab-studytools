@@ -15,6 +15,7 @@ dbstop if error
 % error. Use your studydefaults wrapper function to re-define defaults.mat if
 % you want to add support for a new argument.
 % These are the stock settings
+defs.expname = expname;
 defs.verbose = 1;
 defs.subject = [];
 defs.randseed = [];
@@ -22,11 +23,11 @@ defs.stim_redo = 0;
 defs.stim_size = [];
 defs.studydir = studydir;
 defs.savedata = 1;
-par = varargs2structfields(varargin{1},defs,defs.verbose);
+par = varargs2structfields(varargin,defs,defs.verbose);
 
 % print functionality depends on verbosity
 if par.verbose
-    pr = @(x) fprintf('(%s) %s\n',expname,x);
+    pr = @(x) fprintf('(%s) %s\n',par.expname,x);
 else
     % dummy function
     pr = @(x) x;
@@ -44,7 +45,7 @@ if madedir
 end
 
 % initialise experiment and session
-expdir = fullfile(par.subdir,['data_' expname]);
+expdir = fullfile(par.subdir,['data_' par.expname]);
 madedir = mkdirifneeded(expdir);
 submat = fullfile(expdir,'subdata.mat');
 if madedir || ~exist(submat,'file')
