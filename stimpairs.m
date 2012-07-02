@@ -4,21 +4,19 @@
 % To figure out how many trials you need for a single pass, try
 % nchoosek(nchoosek(nstim,2),2). For most applications, >8 stimuli is
 % impractical.
-% TODO: randomly reassign stim pairs to above/below. Re-write randomisation
-% code. Suspect weird dependencies.
 %
 % MANDATORY INPUTS:
 % stimstruct: struct array or object array, for now of FaceFigure instances
 % 
 % NAMED, OPTIONAL INPUTS
 % nrepeats (1) how many times to go through the cycle
-% stimsize (4.5) degrees visual angle (remember that you need room for 4)
+% stimsize (7) degrees visual angle (remember that you need room for 4)
 % location: (pc) or scanner (TODO: scanner triggers)
 % windowed: (0)
 % verbose: 0 if 1, print out various feedbacks on trials, response accuracy
 % stimoptions: struct with defaults as follows:
 %   stimtype : video
-%   nframes : 24
+%   nframes : 96
 %   framerate : 24
 %   azilims : [-45 45]
 %   elelims : [-22.5 22.5]
@@ -43,16 +41,19 @@ end
 
 % figure out stim indices
 % Construct xy indices for each pair
-% get only lower off diagonals (so [2:15] : [1:14]). Note that this creates
-% left-right dependencies
+% get only upper off diagonals (so [2:15] : [1:14]). Note that this creates
+% left-right dependencies (e.g., 1 never appears on the left, 15 never on
+% the right)
 stiminds = 1:nstim;
-[stim.x, stim.y] = meshgrid(stiminds,stiminds);
+[stim.left, stim.right] = meshgrid(stiminds,stiminds);
 for p = fieldnames(stim)'
-    % lower triangular form
+    % upper triangular form
     stim.(p{1}) = nonzeros(tril(stim.(p{1}),-1));
 end
-% Construct xy indices for each pair of pairs
-%get only lower off diagonals: this creates up/down dependencies
+% Construct indices for each pair of pairs
+%get only upper off diagonals: this creates up/down dependencies (so the
+%first pair only appears below fixation, the last pair only appears above,
+%etc)
 pairinds = 1:npairs;
 [pair.above,pair.below] = meshgrid(pairinds,pairinds);
 for p = fieldnames(pair)'
@@ -60,23 +61,29 @@ for p = fieldnames(pair)'
     pair.(p{1}) = nonzeros(tril(pair.(p{1}),-1));
 end
 
-% Construct non-repeating trial sequence
+%% Trial sequences
+% randomise trial order (non-repeating)
 res.trialinds = randpermrep(npofp,ntrials,0);
-% offset left/right biases by randomising
+% randomise left-right assignment in each pair (1 keep, 2 flip)
 res.leftrightinds = reshape(randpermrep(2,ntrials*2,1),[2 ntrials]);
+% randomise up-down assignment of the pairs (1 keep, 2 flip)
 res.updowninds = randpermrep(2,ntrials,1);
-% Setup logs
+% setup logs (here we log what was actually presented in each quadrant,
+% after re-assignment)
 res.trials.abovestim = NaN([2 ntrials]);
 res.trials.belowstim = NaN([2 ntrials]);
-% sum wins in non-symmetrical stim by stim mat
-res.wincount = zeros(nstim);
-% 1 above, 2 below
+% sum wins in lower triangle of this matrix (take max(y),min(x))
+res.rdm = zeros(nstim);
+% mainly for debugging - keep track of trial n
+res.rdm_n = res.rdm;
+% 1 above, 2 below (no rescoring - this is what the choice was)
 res.trials.choseabove = NaN([1 ntrials]);
 % scramble ids 
 res.trials.itiscrambles = reshape(stiminds(randpermrep(nstim,ntrials*4,...
     1)),[4 ntrials]);
 res.trials.onset = NaN([1 ntrials]);
-res.phase_off = 2;
+res.trials.resptime = NaN([1 ntrials]);
+res.phase_off = 1;
 
 instruct_txt = ['You will see one pair of faces in the upper half of '...
     'the screen, and one pair in the lower half. Use the response key '...
@@ -98,14 +105,13 @@ end
 finishedok = 0;
 try
     %% Start psychtoolbox
-    timing = struct('tstart',0,'son',0,'soff',0,'prevtstart',-inf,...
-        'expstart',0);
+    timing = struct('tstart',0,'expstart',0);
     ppt = startpptexp(location,windowed);
     ppt.respkeys = ppt.respkeys(1:2);
     timing.expstart = GetSecs;
     % Prepare ITI textures
     if verbose
-        fprintf([nstr 'creating textures\n'])
+        fprintf([nstr 'creating ITI textures\n'])
     end
     tex.iti = NaN([1 nstim]);
     for n = 1:nstim
@@ -115,6 +121,9 @@ try
             uint8(255*stimstruct(n).alpha)));
     end
     % prepare texture - different approach here for images and vids
+    if verbose
+        fprintf([nstr 'creating stimulus textures (slow!) \n'])
+    end
     tex.stim = prepfun(stimstruct,ppt,stimoptions);
     % Configure the stimulus rect
     orgsize = size(stimstruct(1).alpha);
@@ -124,7 +133,7 @@ try
     stimrect = [0 0 ppt.deg2px * [stimsize stimsize*ar]];
     % set locations for the 4 stims
     hspacing = 1;
-    vspacing = 1.4;
+    vspacing = 1.2;
     toploc = ppt.ycenter-ppt.deg2px*stimsize*vspacing;
     bottomloc = ppt.ycenter+ppt.deg2px*stimsize*vspacing;
     leftloc = ppt.xcenter-ppt.deg2px*stimsize*hspacing;
@@ -149,52 +158,56 @@ try
     for t = 1:ntrials
         timing.tstart = GetSecs;
         % current trial stims
-        above = pair.above(res.trialinds(t));
-        below = pair.below(res.trialinds(t));
-        doupdownflip = res.updowninds(t)==2;
-        doleftrightflip = res.leftrightinds(:,t)==2;
-        stimoptions.trialrect = stimoptions.rects.vec;
-        if doleftrightflip(1)
-            stimoptions.trialrect(:,1) = stimoptions.rects.topright';
-            stimoptions.trialrect(:,2) = stimoptions.rects.topleft';
+        % flip up/down locations
+        switch res.updowninds(t)
+            case 1
+                above = pair.above(res.trialinds(t));
+                below = pair.below(res.trialinds(t));
+            case 2
+                above = pair.below(res.trialinds(t));
+                below = pair.above(res.trialinds(t));
         end
-        if doleftrightflip(2)
-            stimoptions.trialrect(:,3) = stimoptions.rects.bottomright';
-            stimoptions.trialrect(:,4) = stimoptions.rects.bottomleft';
+        res.trials.abovestim(:,t) = [stim.left(above); stim.right(above)];
+        res.trials.belowstim(:,t) = [stim.left(below); stim.right(below)];
+        % flip left/right in each pair
+        if res.leftrightinds(1,t)==2
+            res.trials.abovestim(:,t) = res.trials.abovestim([2 1],t);
         end
-        if doupdownflip
-            stimoptions.trialrect = [stimoptions.rects.bottomleft; ...
-                stimoptions.rects.bottomright;...
-                stimoptions.rects.topleft; ...
-                stimoptions.rects.topright]'; 
+        if res.leftrightinds(2,t)==2
+            res.trials.belowstim(:,t) = res.trials.belowstim([2 1],t);
         end
-        res.trials.abovestim(:,t) = [stim.x(above); stim.y(above)];
-        res.trials.belowstim(:,t) = [stim.x(below); stim.y(below)];
         % present stimuli
-        res.trials.onset(t) = GetSecs-timing.expstart;
+        res.trials.onset(t) = timing.tstart-timing.expstart;
         if verbose
             fprintf([nstr ...
-                '%ds\t trial %d\t ul=%d\t ur=%d\t dl=%d\t dr=%d\n'],...
+                '%.1fs\t trial %d\t ul=%d\t ur=%d\t dl=%d\t dr=%d\n'],...
                 res.trials.onset(t),t,res.trials.abovestim(1,t),...
                 res.trials.abovestim(2,t),res.trials.belowstim(1,t),...
                 res.trials.belowstim(2,t));
         end
-        resp = stimfun(tex.stim(...
+        [rtime,rkey] = stimfun(tex.stim(...
             [res.trials.abovestim(:,t); res.trials.belowstim(:,t)],:),...
-            ppt,stimoptions) == ppt.respkeys(1);
-        res.trials.choseabove(t) = ...
-            (resp==ppt.respkeys(1) && ~doupdownflip) || ...
-            (resp==ppt.respkeys(2) && doupdownflip);
+            ppt,stimoptions);
+        res.trials.choseabove(t) = rkey==ppt.respkeys(1);
+        res.trials.resptime(t) = rtime-timing.tstart;
+        if verbose
+            fprintf([nstr ...
+                'rt=%.2f\t choseabove=%d\t chosenstims=[%d %d]\n'],...
+                res.trials.resptime(t),res.trials.choseabove(t),...
+                res.trials.abovestim(1,t),res.trials.abovestim(2,t));
+        end
         % score as dissimilarity
         if res.trials.choseabove(t)
             winner = 'belowstim';
         else
             winner = 'abovestim';
         end
-        % add to win matrix
-        res.wincount(res.trials.(winner)(1,t),...
-            res.trials.(winner)(2,t)) = res.wincount(...
-            res.trials.(winner)(1,t),res.trials.(winner)(2,t))+1;
+        inds = res.trials.(winner)(:,t);
+        % add to rdm (now symmetrical)
+        res.rdm(inds(1),inds(2)) = res.rdm(inds(1),inds(2)) + 1;
+        res.rdm(inds(2),inds(1)) = res.rdm(inds(2),inds(1)) + 1;
+        res.rdm_n(inds(1),inds(2)) = res.rdm_n(inds(1),inds(2)) + 1;
+        res.rdm_n(inds(2),inds(1)) = res.rdm_n(inds(2),inds(1)) + 1;
         % iti 
         Screen('DrawTextures',ppt.window,tex.iti(...
             res.trials.itiscrambles(:,t)),[],stimoptions.rects.vec);
@@ -214,11 +227,6 @@ sca;
 if ~finishedok
     keyboard;
 end
-
-% Score responses
-% NB at the moment res.wincount is directly interpretable since each pair
-% appears equally often in each config. It's just that it's a similarity
-% measure, not dissimilarity. 
 
 %% SUB FUNCTIONS
 
@@ -255,7 +263,7 @@ end
 
 % show looping videos and collect responses. Return whenever we get one.
 % resp = showvideo(bufinds,ppt,stimoptions)
-function resp = showvideo(bufinds,ppt,stimoptions)
+function [resptime,resp] = showvideo(bufinds,ppt,stimoptions)
 
 frametime = 1/stimoptions.framerate;
 resp = NaN;
@@ -263,7 +271,7 @@ while isnan(resp)
     fstart = GetSecs;
     for f = [1:stimoptions.nframes stimoptions.nframes-1:-1:2]
         Screen('DrawTextures',ppt.window,bufinds(:,f),[],...
-            stimoptions.trialrect);
+            stimoptions.rects.vec);
         % check for a response once per frame 
         [resptime,resp] = ppt.logfun(0.02,ppt.respkeys,ppt.esc,ppt.ScanObj);
         Screen('Flip',ppt.window,fstart+f*frametime);
