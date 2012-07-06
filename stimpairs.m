@@ -27,18 +27,14 @@ function res = stimpairs(stimstruct,varargin)
 getArgs(varargin,{'nrepeats',1,'stimsize',9,'location','pc',...
     'windowed',0,'verbose',0,'stimoptions',struct('stimtype','video',...
     'nframes',96,'framerate',24,'azilims',[-45 45],'elelims',...
-    [-22.5 22.5])});
+    [-22.5 22.5]),'trialinds',[],'ntrials',Inf});
 
 nstr = sprintf('(%s) ',namepath);
 % count up trials
 nstim = length(stimstruct);
 npairs = nchoosek(nstim,2);
 npofp = nchoosek(npairs,2);
-ntrials = npofp*nrepeats;
-if verbose
-    fprintf([nstr 'running %d trials\n'],ntrials)
-end
-
+npossibletrials = npofp*nrepeats;
 % figure out stim indices
 % Construct xy indices for each pair
 % get only upper off diagonals (so [2:15] : [1:14]). Note that this creates
@@ -63,7 +59,16 @@ end
 
 %% Trial sequences
 % randomise trial order (non-repeating)
-res.trialinds = randpermrep(npofp,ntrials,0);
+if ieNotDefined('trialinds')
+    res.trialinds = randpermrep(npofp,npossibletrials,0);
+else
+    res.trialinds = trialinds;
+end
+
+if verbose
+    fprintf([nstr 'running %d trials\n'],ntrials)
+end
+
 % randomise left-right assignment in each pair (1 keep, 2 flip)
 res.leftrightinds = reshape(randpermrep(2,ntrials*2,1),[2 ntrials]);
 % randomise up-down assignment of the pairs (1 keep, 2 flip)
@@ -79,7 +84,6 @@ res.rdm_n = res.rdm;
 % 1 above, 2 below (no rescoring - this is what the choice was)
 res.trials.choseabove = NaN([1 ntrials]);
 % not used but useful as I can't be trusted to score the above correctly.
-res.trials.resp = NaN([1 ntrials]);
 
 % scramble ids 
 res.trials.itiscrambles = reshape(stiminds(randpermrep(nstim,ntrials*4,...
@@ -225,6 +229,7 @@ catch
     e.stack(:)
 end
 sca;
+close([stimstruct.fighand]);
 
 % Save whatever we have
 if ~finishedok
