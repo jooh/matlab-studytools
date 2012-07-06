@@ -213,6 +213,8 @@ try
         % add to rdm (now symmetrical)
         res.rdm(inds(1),inds(2)) = res.rdm(inds(1),inds(2)) + 1;
         res.rdm(inds(2),inds(1)) = res.rdm(inds(2),inds(1)) + 1;
+        % NB, does not count n properly. Will need to fix
+        % DEBUG DEBUG
         res.rdm_n(inds(1),inds(2)) = res.rdm_n(inds(1),inds(2)) + 1;
         res.rdm_n(inds(2),inds(1)) = res.rdm_n(inds(2),inds(1)) + 1;
         % iti 
