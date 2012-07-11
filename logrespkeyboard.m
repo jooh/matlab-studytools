@@ -21,7 +21,6 @@ while GetSecs < t_in + waitdur
                 return
             end
         elseif k == esckey
-            Screen('CloseAll')
             error('ESC KEY DETECTED - experiment aborted')
             return
         end
