@@ -205,18 +205,20 @@ try
         end
         % score as dissimilarity
         if res.trials.choseabove(t)
-            winner = 'belowstim';
+            [winner,loser] = deal('belowstim','abovestim');
         else
-            winner = 'abovestim';
+            [winner,loser] = deal('abovestim','belowstim');
         end
         inds = res.trials.(winner)(:,t);
+        inds_l = res.trials.(loser)(:,t);
         % add to rdm (now symmetrical)
         res.rdm(inds(1),inds(2)) = res.rdm(inds(1),inds(2)) + 1;
         res.rdm(inds(2),inds(1)) = res.rdm(inds(2),inds(1)) + 1;
-        % NB, does not count n properly. Will need to fix
-        % DEBUG DEBUG
+        % now counts n correctly.
         res.rdm_n(inds(1),inds(2)) = res.rdm_n(inds(1),inds(2)) + 1;
         res.rdm_n(inds(2),inds(1)) = res.rdm_n(inds(2),inds(1)) + 1;
+        res.rdm_n(inds_l(1),inds_l(2)) = res.rdm_n(inds_l(1),inds_l(2)) +1;
+        res.rdm_n(inds_l(2),inds_l(1)) = res.rdm_n(inds_l(2),inds_l(1)) +1;
         % iti 
         Screen('DrawTextures',ppt.window,tex.iti(...
             res.trials.itiscrambles(:,t)),[],stimoptions.rects.vec);
