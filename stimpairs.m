@@ -281,12 +281,14 @@ frametime = 1/stimoptions.framerate;
 resp = NaN;
 while isnan(resp)
     fstart = GetSecs;
+    fsum = fstart;
     for f = [1:stimoptions.nframes stimoptions.nframes-1:-1:2]
         Screen('DrawTextures',ppt.window,bufinds(:,f),[],...
             stimoptions.rects.vec);
         % check for a response once per frame 
         [resptime,resp] = ppt.logfun(0.02,ppt.respkeys,ppt.esc,ppt.ScanObj);
-        Screen('Flip',ppt.window,fstart+f*frametime);
+        Screen('Flip',ppt.window,fsum);
+        fsum = fstart + frametime;
         if ~isnan(resp)
             return
         end
