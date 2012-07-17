@@ -16,18 +16,14 @@
 % verbose: 0 if 1, print out various feedbacks on trials, response accuracy
 % stimoptions: struct with defaults as follows:
 %   stimtype : video
-%   nframes : 96
 %   framerate : 24
-%   azilims : [-45 45]
-%   elelims : [-22.5 22.5]
 %
 % res = stimpairs(stimstruct,varargin)
 function res = stimpairs(stimstruct,varargin)
 
 getArgs(varargin,{'nrepeats',1,'stimsize',9,'location','pc',...
     'windowed',0,'verbose',0,'stimoptions',struct('stimtype','video',...
-    'nframes',96,'framerate',24,'azilims',[-45 45],'elelims',...
-    [-22.5 22.5]),'trialinds',[],'ntrials',Inf});
+    'framerate',24'),'trialinds',[],'ntrials',Inf});
 
 nstr = sprintf('(%s) ',namepath);
 % count up trials
@@ -129,7 +125,7 @@ try
     end
     % prepare texture - different approach here for images and vids
     if verbose
-        fprintf([nstr 'creating stimulus textures (slow!) \n'])
+        fprintf([nstr 'creating stimulus textures\n'])
     end
     tex.stim = prepfun(stimstruct,ppt,stimoptions);
     % Configure the stimulus rect
@@ -249,13 +245,13 @@ end
 function tex = preparevideos(stimstruct,ppt,stimoptions)
 
 nstim = length(stimstruct);
-tex = NaN([nstim stimoptions.nframes]);
+nframes = size(stimstruct(1).videoframes,4);
+tex = NaN([nstim nframes]);
 for n = 1:nstim
-    frames = stimstruct(n).rotateface(stimoptions.azilims,...
-        stimoptions.elelims,stimoptions.nframes);
-    for f = 1:stimoptions.nframes
+    for f = 1:nframes
         tex(n,f) = Screen('MakeTexture',ppt.window,...
-            cat(3,frames(:,:,:,f),uint8(255*stimstruct(n).alpha)));
+            cat(3,stimstruct(n).videoframes(:,:,:,f),...
+            uint8(255*stimstruct(n).alpha)));
     end
 end
 
@@ -278,11 +274,12 @@ end
 function [resptime,resp] = showvideo(bufinds,ppt,stimoptions)
 
 frametime = 1/stimoptions.framerate;
+nframes = size(bufinds,2);
 resp = NaN;
 while isnan(resp)
     fstart = GetSecs;
     fsum = fstart;
-    for f = [1:stimoptions.nframes stimoptions.nframes-1:-1:2]
+    for f = [1:nframes nframes-1:-1:2]
         Screen('DrawTextures',ppt.window,bufinds(:,f),[],...
             stimoptions.rects.vec);
         % check for a response once per frame 
