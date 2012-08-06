@@ -52,18 +52,18 @@ classdef StimulusSpace < hgsetget
         % Add a stimulus to self.stimulus, assigning any attributes as needed
         % based on varargin.
         % addstimulus(varargin)
-            self.nstim = self.nstim+1;
-            % this line is needed to initialise new entry in struct arr
-            self.stimulus(self.nstim).image = [];
             % attempt direct assignment of a structure/object
             % perversely, matlab counts self in nargin but does not provide
             % self as varargin{1}...
-            keyboard;
             if nargin==2 && (isstruct(varargin{1}) || ...
                 isobject(varargin{1}))
-                self.stimulus(self.nstim) = varargin{1};
+                self.stimulus = [self.stimulus varargin{1}];
+                self.nstim = length(self.stimulus);
             else
                 % we probably got an argument list instead
+                self.nstim = self.nstim+1;
+                % this line is needed to initialise new entry in struct arr
+                self.stimulus(self.nstim).image = [];
                 self.stimulus(self.nstim) = varargs2structfields(varargin,...
                     self.stimulus(self.nstim));
             end
@@ -86,6 +86,12 @@ classdef StimulusSpace < hgsetget
         % ('row','col','mat','str','scalar').
         % TODO - deal with missing values
         % [attr,attrtype] = getattribute(attribute)
+            if isempty(self.stimulus)
+                % Catch getattribute on empty space
+                attr = [];
+                attrtype = [];
+                return
+            end
             test = self.stimulus(1).(attribute);
             if isscalar(test)
                 attr = cell2mat({self.stimulus.(attribute)})';
