@@ -2,21 +2,23 @@
 % that the debruijn code on your path (so probably only support for
 % mac/linux).
 %
-% IMPORTANT NOTE: due to a bug in the app, you are quite likely to get an
-% identical sequence if you call the function more than once in e.g. the
-% a loop. Until this bug is fixed you must check that your sequences aren't
-% identical since this may be a lot more likely than you'd expect.
+% IMPORTANT NOTE: Aguirre's app currently has a bug where all sequences for
+% a given second on the system clock are identical. So if you want to
+% generate multiple sequences you should include a check for this or a
+% pause(1) somewhere in your code.
 %
-% INPUTS:
+% MANDATORY INPUTS:
 % k: number of conditions (max 36)
+% model: a dissimilarity matrix (-1 for null entries)
+%   (currently only 1 is supported. The app is meant to report detection
+%   power for other models (optimisation is only done for the first) but
+%   this doesn't seem to work at present)
+% soa: in ms
+%
+% OPTIONAL INPUTS:
 % n: level of counterbalancing (default 2)
 % B: bin size (we use k to find a sensible option if undefined)
 % guidefun: default 'HRF'
-% models: cell array of dissimilarity matrices (up to 3)
-%   (currently broken - only 1 is supported. The app is meant to report
-%   detection power for other models (optimisation is only done for the
-%   first) but this doesn't seem to work at present)
-% soa: in ms
 %
 % OUTPUTS:
 % seq: a sequence of k^n length with condition indices in 1:k range
@@ -27,7 +29,7 @@
 % [seq,r,dpow] = debruijn(varargin)
 function [seq,r,dpow] = debruijn(varargin)
 
-getArgs(varargin,{'k',[],'n',2,'B',[],'guidefun','HRF','models',[],...
+getArgs(varargin,{'k',[],'n',2,'B',[],'guidefun','HRF','model',[],...
     'soa',[]});
 
 
@@ -43,11 +45,11 @@ end
 
 basecmd = sprintf('debruijn -t %d %d %d',k,n,B);
 
-if ismat(models)
-    models = {models};
+if ismat(model)
+    model = {model};
 end
-nmodels = length(models);
-assert(nmodels==1,'only 1 model supported for now')
+nmodels = length(model);
+assert(nmodels<=1,'only 1 model supported for now')
 % use system's tempdir if possible
 td = tempdir;
 if ieNotDefined('td')
@@ -59,8 +61,8 @@ matpaths = cell(nmodels,1);
 for m = 1:nmodels
     % Save mat to text file
     matpaths{m} = fullfile(td,sprintf('debruijn_model_%d.txt',m));
-    ocdwrite(matpaths{m},models{m});
-    %dlmwrite(matpaths{m},models{m},'delimiter',' ','newline','pc');
+    ocdwrite(matpaths{m},model{m});
+    %dlmwrite(matpaths{m},model{m},'delimiter',' ','newline','pc');
     % append filepath to basecmd
     basecmd = [basecmd ' ' matpaths{m}];
 end
@@ -94,7 +96,8 @@ for m = 1:nmodels
     delete(matpaths{m});
 end
 
-% need a truly ocd matwrite subfun to meet the requirements
+% need a truly ocd matwrite subfun to meet the requirements (only carriage
+% return on line end is particularly tricky to get right in Matlab)
 function ocdwrite(path,mat)
 
 fid = fopen(path,'w');
@@ -108,3 +111,4 @@ for n = 1:nrow
         fprintf(fid,'\r');
     end
 end
+fclose(fid);
