@@ -1,36 +1,37 @@
-% Setup basic files and variables for an experiment
-% [subdata pr] = initexperiment(varargin)
-function [subdata pr] = initexperiment(varargin)
+% Setup basic files and variables for an experiment. Also defines the
+% global printfun for use in output
+% subdata = initexperiment(varargin)
+function subdata = initexperiment(varargin)
 
 % if the experiment crashes we want to dbstop so we can save any data
 dbstop if error
 
 % find the calling function's name, use this to define paths
 [expname,studydir] = namepath(2);
-%st = dbstack;
-%expname = st(2).name;
-%studydir = fileparts(which(expname));
 
-% Set any non-standard parameters. NB adding new parameters here will raise an
-% error. Use your studydefaults wrapper function to re-define defaults.mat if
-% you want to add support for a new argument.
-% These are the stock settings
+% Set any non-standard parameters. NB adding new parameters here will raise
+% an error. Use your studydefaults wrapper function if you want to add
+% support for a new argument.  These are the stock settings
 defs.expname = expname;
+% print useful info
 defs.verbose = 1;
+% print less useful info, run in windowed etc
+defs.debug = 0;
 defs.subject = [];
 defs.randseed = [];
-defs.stim.redo = 0;
+defs.redostims = 0;
 defs.stim.size = [];
 defs.studydir = studydir;
 defs.savedata = 1;
 par = varargs2structfields(varargin,defs,defs.verbose);
 
 % print functionality depends on verbosity
+global printfun
 if par.verbose
-    pr = @(x) fprintf('(%s) %s\n',par.expname,x);
+    printfun = @(x) fprintf('(%s) %s\n',par.expname,x);
 else
     % dummy function
-    pr = @(x) x;
+    printfun = @(x) x;
 end
 
 % initialise subject 
@@ -49,7 +50,7 @@ expdir = fullfile(par.subdir,['data_' par.expname]);
 madedir = mkdirifneeded(expdir);
 submat = fullfile(expdir,'subdata.mat');
 if madedir || ~exist(submat,'file')
-    pr(sprintf('initialised new experiment in %s',expdir));
+    printfun(sprintf('initialised new experiment in %s',expdir));
     par.sessionI = 1;
     subdata = struct('par',{},'testtime',{},...
         'res',{},'notes',{});
@@ -61,9 +62,9 @@ end
 % Set randomisation
 if isempty(par.randseed)
     par.randseed = sum(100*clock);
-    pr(sprintf('new randseed: %f',par.randseed));
+    printfun(sprintf('new randseed: %f',par.randseed));
 else
-    pr(sprintf('predetermined randseed: %f',par.randseed));
+    printfun(sprintf('predetermined randseed: %f',par.randseed));
 end
 s = RandStream.create('mt19937ar','seed',par.randseed);
 RandStream.setDefaultStream(s);
@@ -72,3 +73,13 @@ subdata(par.sessionI).par = par;
 subdata(par.sessionI).testtime = datestr(now);
 subdata(par.sessionI).expdir = expdir;
 % (res and notes get filled in at the end)
+
+% try matlabpool
+try
+    if matlabpool('size') == 0
+        % start default matlabpool config
+        matlabpool;
+    end
+catch
+    printfun('parallel processing is not available')
+end

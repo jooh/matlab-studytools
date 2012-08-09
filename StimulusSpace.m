@@ -46,6 +46,10 @@ classdef StimulusSpace < hgsetget
             end
             % Insert any other nonstandard parameters
             f = varargs2structfields(varargin,f);
+            % empty out array if initialising empty
+            if f.nstim == 0
+                f.stimulus(1) = [];
+            end
         end
 
         function addstimulus(self,varargin)
@@ -258,11 +262,11 @@ classdef StimulusSpace < hgsetget
             if ieNotDefined('target')
                 target = 'image';
             end
-            sizes = cell2mat(cellfun(@size,{self.stimulus.(target)}',...
+            sizes = cell2mat(cellfun(@size,get(self.stimulus,target),...
                 'uniformoutput',false));
             assert(~any(logical(std(sizes,1))),'sizes must match')
             refhist = averageandscaleHistograms(...
-                {self.stimulus.(target)});
+                get(self.stimulus,target));
             self.referencehist = refhist;
         end
 
@@ -281,6 +285,26 @@ classdef StimulusSpace < hgsetget
             for im = 1:self.nstim
                 self.stimulus(im).(target) = imposeHistogram(...
                     self.stimulus(im).(target),self.referencehist,1:256);
+            end
+        end
+
+        function makeandimposehistograms(self,targets,updatemethod)
+        % Convenience method for applying histogram equalisation to a
+        % single target (string) or a set of targets (cell array).
+        % updatemethod is an optional string for mapmethod in case updating
+        % is necessary between targets.
+        % makeandimpose(self,targets,updatemethod)
+            if ischar(targets)
+                % support single string input
+                targets = {targets};
+            end
+            doupdate = ~ieNotDefined('updatemethod');
+            for t = asrow(targets)
+                self.makeaveragehistogram(t{1});
+                self.imposehistogram(t{1});
+                if doupdate
+                    self.mapmethod(updatemethod);
+                end
             end
         end
 
@@ -315,8 +339,9 @@ classdef StimulusSpace < hgsetget
         % does not support outputs at present. Mainly useful for updating
         % figure objects.
         % mapmethod(self,commandstr)
-            cmd = @(x) eval(['self.stimulus(' num2str(x) ').' commandstr]);
-            arrayfun(cmd,1:self.nstim);
+            cmd = @(x) evalc(...
+                ['self.stimulus(' num2str(x) ').' commandstr]);
+            arrayfun(cmd,1:self.nstim,'uniformoutput',false);
         end
     end
 end
