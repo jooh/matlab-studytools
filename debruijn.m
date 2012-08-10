@@ -2,36 +2,38 @@
 % that the debruijn code on your path (so probably only support for
 % mac/linux).
 %
-% IMPORTANT NOTE: Aguirre's app currently has a bug where all sequences for
-% a given second on the system clock are identical. So if you want to
-% generate multiple sequences you should include a check for this or a
-% pause(1) somewhere in your code.
-%
 % MANDATORY INPUTS:
 % k: number of conditions (max 36)
-% model: a dissimilarity matrix (-1 for null entries)
-%   (currently only 1 is supported. The app is meant to report detection
-%   power for other models (optimisation is only done for the first) but
-%   this doesn't seem to work at present)
+% models: a single dissimilarity matrix (-1 for null entries) or a cell
+%   array of matrices (the guide function is determined by model 1, but
+%   detection power is reported for the other two as well)
 % soa: in ms
 %
 % OPTIONAL INPUTS:
 % n: level of counterbalancing (default 2)
 % B: bin size (we use k to find a sensible option if undefined)
 % guidefun: default 'HRF'
+% cachemodels: default 0. If 1, we save model text files with a SHA-1
+%   hash'ed filename, and reuse the same files if they exist. This saves us
+%   having to re-write the model matrices to disk, but the speedup looks a
+%   bit more modest than I had hoped. One potential benefit is that once
+%   the models have been initialised (ie, the function has been run once
+%   with cachemodels=1), no further writing to disk takes place so it
+%   becomes possible to execute the optimisation in parallel (see
+%   optimisedebruijn)
 %
 % OUTPUTS:
 % seq: a sequence of k^n length with condition indices in 1:k range
 % r: correlation between guidefun (HRF) and distances in sequence
 % dpow: relative detection power (proportion of variance in sequence that
-% survives passing through an HRF and a .01 Hz high pass filter)
+% survives passing through an HRF and a .01 Hz high pass filter) for each
+% input model
 %
 % [seq,r,dpow] = debruijn(varargin)
 function [seq,r,dpow] = debruijn(varargin)
 
-getArgs(varargin,{'k',[],'n',2,'B',[],'guidefun','HRF','model',[],...
-    'soa',[]});
-
+getArgs(varargin,{'k',[],'n',2,'B',[],'guidefun','HRF','models',[],...
+    'soa',[],'cachemodels',0});
 
 % Aguirre suggests setting B to a number divisible by k^2 to achieve an
 % even number of paths in each bin
@@ -43,13 +45,13 @@ if ieNotDefined('B')
     assert(~isempty(B),'failed to find a suitable B')
 end
 
-basecmd = sprintf('debruijn -t %d %d %d',k,n,B);
+basecmd = sprintf('debruijn -t %d %d %d %s',k,n,B,guidefun);
 
-if ismat(model)
-    model = {model};
+if ismat(models)
+    models = {models};
 end
-nmodels = length(model);
-assert(nmodels<=1,'only 1 model supported for now')
+nmodels = length(models);
+assert(nmodels<=3,'only 3 models supported for now')
 % use system's tempdir if possible
 td = tempdir;
 if ieNotDefined('td')
@@ -58,17 +60,28 @@ if ieNotDefined('td')
 end
 
 matpaths = cell(nmodels,1);
+
+if cachemodels
+    % only use expensive DataHash function if we are cacheing
+    namefun = @(x) DataHash(models{x},struct('Method','SHA-1'));
+else
+    namefun = @(x) num2str(x,'%.0f');
+end
+
 for m = 1:nmodels
-    % Save mat to text file
-    matpaths{m} = fullfile(td,sprintf('debruijn_model_%d.txt',m));
-    ocdwrite(matpaths{m},model{m});
-    %dlmwrite(matpaths{m},model{m},'delimiter',' ','newline','pc');
+    % Save mat to text file (name either by m or hash)
+    matpaths{m} = fullfile(td,sprintf('debruijn_model_%s.txt',...
+        namefun(m)));
+    % if the file exists and we are cacheing, save a write operation
+    if ~exist(matpaths{m},'file') || ~cachemodels
+        ocdwrite(matpaths{m},models{m});
+    end
     % append filepath to basecmd
     basecmd = [basecmd ' ' matpaths{m}];
 end
 
 % Add final bits and run the beast
-basecmd = sprintf('%s %s -eval %f',basecmd,guidefun,soa);
+basecmd = sprintf('%s -eval %f',basecmd,soa);
 [err,res] = system(basecmd);
 assert(~err,['command failed with message: ' res]);
 
@@ -88,12 +101,22 @@ end
 % Extract sequence descriptives
 r = textscan(lines{6},'%*s %*s %f');
 r = r{1};
-dpow = textscan(lines{7},'%*s %*s %f');
-dpow = dpow{1};
+if nmodels==1
+    dpow = textscan(lines{7},'%*s %*s %f');
+    dpow = dpow{1};
+else
+    dpow = NaN([1 nmodels]);
+    for m = 1:nmodels
+        dpowcell = textscan(lines{6+m},'%*s %*s %*s %f');
+        dpow(m) = dpowcell{1};
+    end
+end
 
 % remove temp files (matpaths)
-for m = 1:nmodels
-    delete(matpaths{m});
+if ~cachemodels
+    for m = 1:nmodels
+        delete(matpaths{m});
+    end
 end
 
 % need a truly ocd matwrite subfun to meet the requirements (only carriage
