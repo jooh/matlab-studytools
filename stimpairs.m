@@ -117,6 +117,8 @@ try
     timing = struct('tstart',0,'expstart',0);
     ppt = startpptexp(location,windowed);
     Screen(ppt.window, 'FillRect', bgcolor);
+    % gray for white/black, black for gray
+    txtcolor = rem(bgcolor+128,255);
     ppt.respkeys = ppt.respkeys(1:2);
     timing.expstart = GetSecs;
     % Prepare ITI textures
@@ -162,7 +164,7 @@ try
         stimoptions.rects.bottomright]';
     % instructions
     DrawFormattedText(ppt.window,instruct_txt,'center','center',...
-        ppt.white,ppt.txtwrap, 0, 0, ppt.vspacing);
+        txtcolor,ppt.txtwrap, 0, 0, ppt.vspacing);
     Screen('Flip',ppt.window);
     waitResp(ppt.spacebar,ppt.esc);
     for t = 1:ntrials
@@ -236,7 +238,10 @@ catch
     e.stack(:)
 end
 sca;
-close([stimstruct.fighand]);
+% close any open FaceFigure windows
+if any(ishandle([stimstruct.fighand]))
+    close([stimstruct(ishandle([stimstruct.fighand])).fighand]);
+end
 
 % Save whatever we have
 if ~finishedok
