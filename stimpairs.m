@@ -13,6 +13,7 @@
 % stimsize (7) degrees visual angle (remember that you need room for 4)
 % location: (pc) or scanner (TODO: scanner triggers)
 % windowed: (0)
+% bgcolor: ([.5 .5 .5]) gets rescored to uint8 range
 % verbose: 0 if 1, print out various feedbacks on trials, response accuracy
 % stimoptions: struct with defaults as follows:
 %   stimtype : video
@@ -23,7 +24,12 @@ function res = stimpairs(stimstruct,varargin)
 
 getArgs(varargin,{'nrepeats',1,'stimsize',9,'location','pc',...
     'windowed',0,'verbose',0,'stimoptions',struct('stimtype','video',...
-    'framerate',24'),'trialinds',[],'ntrials',Inf});
+    'framerate',24'),'trialinds',[],'ntrials',Inf,'bgcolor',[.5 .5 .5]});
+
+% make sure if uint8 range
+if all(bgcolor <= 1)
+    bgcolor = bgcolor * 255;
+end
 
 nstr = sprintf('(%s) ',namepath);
 % count up trials
@@ -110,6 +116,7 @@ try
     %% Start psychtoolbox
     timing = struct('tstart',0,'expstart',0);
     ppt = startpptexp(location,windowed);
+    Screen(ppt.window, 'FillRect', bgcolor);
     ppt.respkeys = ppt.respkeys(1:2);
     timing.expstart = GetSecs;
     % Prepare ITI textures
