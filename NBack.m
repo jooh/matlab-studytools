@@ -24,7 +24,7 @@ classdef NBack < Study
             end
         end
 
-        function postcall(self)
+        function postcall(self,t)
             % TODO
             keyboard;
             % this won't work but it's roughly the logic we want

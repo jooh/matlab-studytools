@@ -27,6 +27,7 @@ classdef ImageEvent < StudyEvent
 
         function call(self)
             self.ncalls = self.ncalls+1;
+            self.calltime = GetSecs;
             % nb we don't flip to allow multiple draws before flip
             Screen('DrawTexture',self.window,self.tex,[],self.rect);
         end

@@ -11,7 +11,7 @@ classdef KeyboardCheck < ResponseCheck
             KbName('UnifyKeyNames');
             s.esc = KbName('escape');
             s.spacebar = KbName('space');
-            s.validkeys = st.validkeys;
+            s.validkeys = KbName(st.validkeys);
         end
 
         function [respk,resptime] = checkkeys(self);

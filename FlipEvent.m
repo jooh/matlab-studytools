@@ -1,10 +1,11 @@
-classdef FlipEvent > StudyEvent
+classdef FlipEvent < StudyEvent
     % subclass for StudyEvent.
     properties
         actualtime = NaN;
         when = 0;
         window = [];
         dontclear = 0;
+        eventname = 'flip';
     end
 
     methods
@@ -14,6 +15,8 @@ classdef FlipEvent > StudyEvent
         end
 
         function call(self)
+            self.ncalls = self.ncalls+1;
+            self.time = GetSecs;
             self.actualtime = Screen('Flip',self.window,self.when,...
                 self.dontclear);
         end

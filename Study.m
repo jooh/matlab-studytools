@@ -134,29 +134,28 @@ classdef Study < hgsetget & dynamicprops
             timing.study = GetSecs;
             for t = 1:ntrials
                 timing.trial = GetSecs;
-                for e = 1:length(self.trials{t}.studyevents)
+                for e = 1:length(self.trials(t).studyevents)
                     self.timing.event = GetSecs;
                     % make sure we do all events once, even if impulse
                     done = 0;
                     while ~done
-                        self.trials{t}.studyevents{e}.call;
+                        self.trials(t).studyevents{e}.call;
                         % check for skipahead flag and timeout
                         done = ...
-                            (self.trials{t}.studyevents{e}.skipahead==0)...
+                            (self.trials(t).studyevents{e}.skipahead==0)...
                             || (GetSecs < (self.timing.event + ...
-                                self.trials{t}.studyevents{e}.duration));
+                                self.trials(t).studyevents{e}.duration));
                     end
                     % analyse trial (across events)
-                    self.trials{t}.postcall;
+                    self.trials(t).postcall;
                 end
                 % analyse study (across trials)
-                self.postcall;
+                self.postcall(t);
             end
         end
-        
-        function postcall(self,output)
-            % placeholder
-            return
-        end
+    end
+
+    methods (Abstract)
+        postcall(self,t)
     end
 end

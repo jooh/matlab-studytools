@@ -1,11 +1,16 @@
-classdef StudyEvent
-    % Master class for Study events
+classdef StudyEvent < hgsetget & dynamicprops
+    % Abstract class for Study events - must be inherited to use
     properties
         duration = 0; % how long to get called for
         units = 's'; % timing in s or scans (not yet supported)
-        eventname = 'master'; % this field is useful for e.g. response logging
+        %eventname = 'master'; % this field is useful for e.g. response logging
         skipahead = 0; % flag to break out of any waitloop
-        ncalls = 0; % track call n
+        ncalls = 0;
+        calltime = 0;
+    end
+
+    properties (Abstract)
+        eventname
     end
 
     methods
@@ -16,12 +21,9 @@ classdef StudyEvent
             end
             s = varargs2structfields(varargin,s);
         end
+    end
 
-        function call(self)
-            % placeholder
-            self.ncalls = self.ncalls+1;
-            error('Use inherited classes.')
-            return
-        end
+    methods (Abstract)
+        call(self)
     end
 end

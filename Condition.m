@@ -4,7 +4,7 @@ classdef Condition
     % condition.  Inherited classes provide custom postcalls for e.g.
     % scoring responses in different ways
     properties
-        studyevents = {};
+        studyevents = [];
         eventname = 'condition';
     end
 
@@ -15,6 +15,7 @@ classdef Condition
         end
 
         function postcall(self)
+            keyboard;
             % summarise trial events
             % placeholder - but no raise. Maybe you really have no
             % behaviour here.

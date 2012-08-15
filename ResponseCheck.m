@@ -19,18 +19,15 @@ classdef ResponseCheck < StudyEvent
         function call(self)
             self.ncalls = self.ncalls + 1;
             [respk,resptime] = self.checkkeys;
-            [validresp,inds] = union(self.validkeys,respk);
+            [validresp,x,inds] = intersect(self.validkeys,respk);
             if any(validresp)
                 self.responsekeys = [self.responsekeys validresp];
                 self.responsetimes = [self.responsetimes resptime(inds)];
             end
         end
+    end
 
-        function [respk,resptime] = checkkeys(self);
-            % placeholder
-            error('Use inherited classes.')
-            return
-        end
-
+    methods (Abstract)
+        [respk,resptime] = checkkeys(self);
     end
 end
