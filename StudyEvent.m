@@ -1,4 +1,4 @@
-classdef StudyEvent < hgsetget & dynamicprops
+classdef StudyEvent
     % Master class for Study events
     properties
         duration = 0; % how long to get called for

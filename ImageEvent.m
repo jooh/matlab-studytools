@@ -10,9 +10,14 @@ classdef ImageEvent < StudyEvent
     end
 
     methods
-        function s = ImageEvent(varargin)
+        function s = ImageEvent(im,st,varargin)
         % Initialise event by populating fields, possibly making texture
             s = varargs2structfields(varargin,s);
+            s.image = im;
+            s.window = st.window;
+            if ieNotDefined('alpha')
+                alpha = ones(size(im));
+            end
             % do we need to make texture?
             if isempty(s.tex)
                 s.tex = Screen('MakeTexture',s.window,...

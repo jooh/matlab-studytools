@@ -10,6 +10,9 @@ classdef ResponseCheck < StudyEvent
 
     methods
         function s = ResponseCheck(varargin)
+            if nargin==0
+                return
+            end
             s = varargs2structfields(varargin,s);
         end
 

@@ -6,9 +6,12 @@ classdef KeyboardCheck < ResponseCheck
     end
 
     methods
-        function s = KeyboardCheck(varargin)
+        function s = KeyboardCheck(st,varargin)
             s = varargs2structfields(varargin,s);
             KbName('UnifyKeyNames');
+            s.esc = KbName('escape');
+            s.spacebar = KbName('space');
+            s.validkeys = st.validkeys;
         end
 
         function [respk,resptime] = checkkeys(self);
