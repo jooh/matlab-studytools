@@ -3,9 +3,6 @@ classdef ResponseCheck < StudyEvent
     properties
         validkeys = []; % vector of possible responses
         eventname = 'responsecheck';
-        waitresp = 0; % skip ahead in event loop if key press
-        responsekeys = []; % store valid presses here
-        responsetimes = []; % store valid times
     end
 
     methods
@@ -20,10 +17,8 @@ classdef ResponseCheck < StudyEvent
             self.ncalls = self.ncalls + 1;
             [respk,resptime] = self.checkkeys;
             [validresp,x,inds] = intersect(self.validkeys,respk);
-            if any(validresp)
-                self.responsekeys = [self.responsekeys validresp];
-                self.responsetimes = [self.responsetimes resptime(inds)];
-            end
+            self.response = validresp;
+            self.time = resptime(inds);
         end
     end
 

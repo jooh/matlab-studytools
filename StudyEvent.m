@@ -4,9 +4,10 @@ classdef StudyEvent < hgsetget & dynamicprops
         duration = 0; % how long to get called for
         units = 's'; % timing in s or scans (not yet supported)
         %eventname = 'master'; % this field is useful for e.g. response logging
-        skipahead = 0; % flag to break out of any waitloop
         ncalls = 0;
-        calltime = 0;
+        time = [];
+        response = [];
+        skiponresponse = 0;
     end
 
     properties (Abstract)

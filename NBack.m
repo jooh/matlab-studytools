@@ -5,9 +5,6 @@ classdef NBack < Study
         targetfield = 'tex';
         targetname = 'image';
         responsename = '';
-        time_hit = [];
-        time_fa = [];
-        time_onset = [];
         keyind = 1;
     end
 
@@ -24,11 +21,9 @@ classdef NBack < Study
             end
         end
 
-        function postcall(self,t)
-            % TODO
-            keyboard;
-            % this won't work but it's roughly the logic we want
-            %targets = findStrInArray([self.eventvec.eventname],targetname);
+        function scoretrial(self,t)
+            % Populate 'score' field in self.trials(t) with result of
+            % current trial
         end
     end
 end

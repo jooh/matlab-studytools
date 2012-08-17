@@ -4,7 +4,7 @@ classdef Study < hgsetget & dynamicprops
         %precision = 1e-3; % how often to re-call in s
         units = 's'; % timing in s or scans (not yet supported)
         trackscans = false; % keep track of triggers
-        timing = struct('study',0,'trial',0,'event',0);
+        studytime = 0;
         debug = 0; % shorthand for debug=1, verbose=1
         verbose = 0;
         windowed = 0;
@@ -22,15 +22,15 @@ classdef Study < hgsetget & dynamicprops
         oldresolution = [NaN NaN];
         px2deg = [];
         deg2px = [];
-        bgcolour = [];
+        bgcolour = [128 128 128];
         colours = struct('white',[],'black',[],'grey',[]);
         textpar = struct('font','tahoma','size',14,'style',0,...
             'vspacing',1.4,'colour',[1 1 1],'txtwrap',50);
         xcenter = [];
         ycenter = [];
-        conditions = {}; % each unique condition
+        conditions = Condition([]);
         trialorder = []; % indices into conditions
-        trials = {}; % conditions{trialorder}
+        trials = []; % constructed by initialisetrials (can be subbed)
     end
 
     methods
@@ -47,6 +47,7 @@ classdef Study < hgsetget & dynamicprops
                 self.verbose = 1;
                 self.windowed = 1;
             end
+            warning('off','catstruct:DuplicatesFound');
             switch self.location
                 case 'pc'
                     screens = Screen('Screens');
@@ -129,33 +130,43 @@ classdef Study < hgsetget & dynamicprops
         function runtrials(self,trialorder)
             assert(isempty(self.trials),'TODO: handle repeated runs')
             ntrials = length(trialorder);
-            % upcast conditions to full sequence
-            self.trials = self.conditions(trialorder);
-            timing.study = GetSecs;
+            % append new trials
+            % HERE: iterate over trials, preallocate eventtime and
+            % eventresult fields (different for each trial), populate
+            % nevent field. Makes actual trial loop tighter.
+            % (store data also in each condition handle. Kind of
+            % convenient and sufficient for many analyses)
+            % Actually, a lot of the preallocation can be done when the
+            % condition itself is instanced - we can then copy off these
+            % preallocated fields into the trials field.
+            self.initialisetrials(trialorder);
             for t = 1:ntrials
-                timing.trial = GetSecs;
-                for e = 1:length(self.trials(t).studyevents)
-                    self.timing.event = GetSecs;
-                    % make sure we do all events once, even if impulse
-                    done = 0;
-                    while ~done
-                        self.trials(t).studyevents{e}.call;
-                        % check for skipahead flag and timeout
-                        done = ...
-                            (self.trials(t).studyevents{e}.skipahead==0)...
-                            || (GetSecs < (self.timing.event + ...
-                                self.trials(t).studyevents{e}.duration));
-                    end
-                    % analyse trial (across events)
-                    self.trials(t).postcall;
-                end
-                % analyse study (across trials)
-                self.postcall(t);
+                self.trials(t).condition.call;
+                % update the central trial log with the new result from
+                % the condition instance
+                self.trials(t) = catstruct(self.trials(t),...
+                    self.trials(t).condition.result(...
+                    self.trials(t).condition.ncalls));
+                self.scoretrial(t);
             end
+        end
+
+        function initialisetrials(self,trialorder)
+            % initialise log files in each condition
+            [coninds,counts] = count_unique(trialorder);
+            % prepare log struct arrays inside each condition
+            for c = 1:length(coninds)
+                self.conditions(coninds(c)).preparelog(counts(c));
+            end
+            % and a global log file
+            ntrials = length(trialorder);
+            self.trials = struct('condition',...
+                num2cell(self.conditions(trialorder)),'response',[],...
+                'score',[],'time',[]);
         end
     end
 
     methods (Abstract)
-        postcall(self,t)
+        scoretrial(self,t)
     end
 end
