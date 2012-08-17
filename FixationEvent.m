@@ -7,7 +7,7 @@ classdef FixationEvent < StudyEvent
         colour = [];
         rect = []; % Psychtoolbox rect
         window = []; % window handle
-        eventname = 'fixation';
+        name = 'fixation';
     end
 
     methods

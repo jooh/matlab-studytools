@@ -4,38 +4,47 @@ classdef Condition < hgsetget & dynamicprops
     % the condition (usually from Study subclass)
     properties
         studyevents = [];
-        eventname = 'condition';
         nevents = 0;
         time = [];
         response = {};
         result = struct;
         ncalls = 0;
+        soa = 0; % 50ms above the sum of durations should be enough
+        name = 'condition';
+        timing = [];
     end
 
     methods
-        function t = Condition(varargin);
+        function t = Condition(studyevents,varargin);
             if nargin==0
                 return
-            elseif nargin==1 && isempty(varargin{1})
+            elseif nargin==1 && isempty(studyevents)
                 t = t([]);
                 return
             end
-            t.studyevents = varargin;
+            t = varargs2structfields(varargin,t);
+            t.studyevents = studyevents;
             % preallocate fields
-            t.nevents = nargin;
+            t.nevents = length(studyevents);
             t.time = zeros(1,t.nevents);
             t.response = cell(1,t.nevents);
+            % extract vector of durations
+            durations = cellfun(@(x)x.duration,t.studyevents);
+            % ideal timings relative to onset
+            t.timing = cumsum(durations);
         end
 
         function preparelog(self,ntrials)
             % time, responses, and 'score', which is the result of postcall
             self.result = struct('time',...
                 repmat({self.time},[ntrials 1]),'response',...
+                repmat({self.response},[ntrials 1]),'responsetime',...
                 repmat({self.response},[ntrials 1]),...
                 'score',[]);
         end
 
         function call(self)
+            calltime = GetSecs;
             self.ncalls = self.ncalls+1;
             for e = 1:self.nevents
                 self.result(self.ncalls).time(e) = GetSecs;
@@ -51,11 +60,16 @@ classdef Condition < hgsetget & dynamicprops
                             self.studyevents{e}.response];
                         % remove from studyevent (prevent handle weirdness)
                         self.studyevents{e}.response = [];
+                        self.result(self.ncalls).responsetime{e} = ...
+                            [self.result(self.ncalls).responsetime{e} ...
+                            self.studyevents{e}.responsetime];
+                        % remove from studyevent (prevent handle weirdness)
+                        self.studyevents{e}.responsetime = [];
                     end
                     % check for skipahead flag and timeout
                     skip = responded && self.studyevents{e}.skiponresponse;
-                    outoftime = (self.studyevents{e}.duration + ...
-                        self.result(self.ncalls).time(e)) < GetSecs;
+                    % now absolute timings to reduce lag
+                    outoftime = calltime+self.timing(e) < GetSecs;
                     done = skip || outoftime;
                 end
             end

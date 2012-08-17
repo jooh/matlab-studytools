@@ -2,7 +2,9 @@ classdef ResponseCheck < StudyEvent
     % StudyEvent subclass for logging responses
     properties
         validkeys = []; % vector of possible responses
-        eventname = 'responsecheck';
+        name = 'responsecheck';
+        keyisdown = 0;
+        lastkey = NaN;
     end
 
     methods
@@ -18,7 +20,7 @@ classdef ResponseCheck < StudyEvent
             [respk,resptime] = self.checkkeys;
             [validresp,x,inds] = intersect(self.validkeys,respk);
             self.response = validresp;
-            self.time = resptime(inds);
+            self.responsetime = resptime(inds);
         end
     end
 

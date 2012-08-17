@@ -8,24 +8,34 @@ classdef KeyboardCheck < ResponseCheck
     methods
         function s = KeyboardCheck(st,varargin)
             s = varargs2structfields(varargin,s);
-            KbName('UnifyKeyNames');
             s.esc = KbName('escape');
             s.spacebar = KbName('space');
-            s.validkeys = KbName(st.validkeys);
+            s.validkeys = st.validkeys;
         end
 
-        function [respk,resptime] = checkkeys(self);
+        function [respkey,resptime] = checkkeys(self);
             [keyisdown, rawtime, keyCode] = KbCheck;
             resptime = [];
-            respk = [];
+            respkey = [];
             if keyisdown
-                resptime = rawtime;
                 respk = find(keyCode);
                 respk = respk(1);
-                if respk == self.esc
+                % ignore held keys
+                if self.keyisdown && respk==self.lastkey
+                    return
+                elseif respk == self.esc
                     error('ESC KEY DETECTED - experiment aborted')
                     return
                 end
+                resptime = rawtime;
+                respkey = respk;
+                % update internal state
+                self.keyisdown = keyisdown;
+                self.lastkey = respkey;
+            else
+                % reset to record repeated distinct presses of the same key
+                self.keyisdown = 0;
+                self.lastkey = NaN;
             end
         end
     end

@@ -5,7 +5,7 @@ classdef FlipEvent < StudyEvent
         when = 0;
         window = [];
         dontclear = 0;
-        eventname = 'flip';
+        name = 'flip';
     end
 
     methods
@@ -16,8 +16,8 @@ classdef FlipEvent < StudyEvent
 
         function call(self)
             self.ncalls = self.ncalls+1;
-            self.time = GetSecs;
-            self.actualtime = Screen('Flip',self.window,self.when,...
+            %self.time = GetSecs;
+            self.time = Screen('Flip',self.window,self.when,...
                 self.dontclear);
         end
     end

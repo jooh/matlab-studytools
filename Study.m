@@ -1,14 +1,10 @@
 classdef Study < hgsetget & dynamicprops
     % Master class for running cognitive experiments
     properties
-        %precision = 1e-3; % how often to re-call in s
         units = 's'; % timing in s or scans (not yet supported)
-        trackscans = false; % keep track of triggers
-        studytime = 0;
         debug = 0; % shorthand for debug=1, verbose=1
         verbose = 0;
         windowed = 0;
-        ev = 0;
         screen = [];
         window = [];
         rect = [];
@@ -19,7 +15,7 @@ classdef Study < hgsetget & dynamicprops
         TR = [];
         scanobj = [];
         resolution = [1024 768];
-        oldresolution = [NaN NaN];
+        oldresolution = struct;
         px2deg = [];
         deg2px = [];
         bgcolour = [128 128 128];
@@ -29,8 +25,9 @@ classdef Study < hgsetget & dynamicprops
         xcenter = [];
         ycenter = [];
         conditions = Condition([]);
-        trialorder = []; % indices into conditions
         trials = []; % constructed by initialisetrials (can be subbed)
+        printfun =[];
+        logfile = '';
     end
 
     methods
@@ -43,18 +40,32 @@ classdef Study < hgsetget & dynamicprops
         end
 
         function openwindow(self)
+            warning('off','catstruct:DuplicatesFound');
             if self.debug
                 self.verbose = 1;
                 self.windowed = 1;
             end
-            warning('off','catstruct:DuplicatesFound');
+            if self.verbose
+                self.printfun = @(x) fprintf([x '\n']);
+            else
+                self.printfun = @(x)x;
+            end
+            self.printfun('openwindow')
+
+            if isempty(self.logfile)
+                self.logfile = fullfile(tempdir,sprintf('study_%s.txt',...
+                    datestr(now,'yyyy_mm_dd_HHMM')));
+            end
+            KbName('UnifyKeyNames');
             switch self.location
                 case 'pc'
                     screens = Screen('Screens');
                     self.screen = screens(ceil(length(screens)/2));
                     self.totdist = '500';
                     self.screenwidth = '380';
-                    self.validkeys = {'v','b','n','m'};
+                    % assume you've entered a cell array of keys
+                    self.validkeys = KbName(self.validkeys);
+                    self.printfun('running in PC mode');
                 case 'mri'
                     self.screen = 0;
                     self.totdist = 913;
@@ -66,10 +77,12 @@ classdef Study < hgsetget & dynamicprops
                     assert(isnumeric(self.TR),'must set TR for scanner sync!')
                     invoke(self.scanobj,'SetTimeout',double(20000)); % 20
                     invoke(self.scanobj,'SetMSPerSample',2);
+                    self.printfun('running in scanner mode');
                 otherwise
                     error('unrecognised location: %s',self.location)
             end
-            % On any recent Mac OS version, PPT works very poorly at the moment
+            % On any recent Mac OS version, PPT works very poorly at the
+            % moment
             if ismac
                 Screen('Preference','SkipSyncTests',1);
             else
@@ -124,22 +137,20 @@ classdef Study < hgsetget & dynamicprops
         end
 
         function closewindow(self)
-            Screen('Close',self.window);
+            % for some reason Screen('Close',self.window) doesn't work
+            self.printfun('closewindow')
+            Screen('CloseAll');
         end
 
         function runtrials(self,trialorder)
             assert(isempty(self.trials),'TODO: handle repeated runs')
+            self.printfun('runtrials')
             ntrials = length(trialorder);
-            % append new trials
-            % HERE: iterate over trials, preallocate eventtime and
-            % eventresult fields (different for each trial), populate
-            % nevent field. Makes actual trial loop tighter.
-            % (store data also in each condition handle. Kind of
-            % convenient and sufficient for many analyses)
-            % Actually, a lot of the preallocation can be done when the
-            % condition itself is instanced - we can then copy off these
-            % preallocated fields into the trials field.
+            self.printfun(sprintf('running %d trials',ntrials));
             self.initialisetrials(trialorder);
+            self.printfun(['logfile: ' self.logfile]);
+            diary(self.logfile);
+            self.printfun('TRIAL\t TIME\t CYCLE\t CONDITION\t RESPONSE\t');
             for t = 1:ntrials
                 self.trials(t).condition.call;
                 % update the central trial log with the new result from
@@ -148,10 +159,24 @@ classdef Study < hgsetget & dynamicprops
                     self.trials(t).condition.result(...
                     self.trials(t).condition.ncalls));
                 self.scoretrial(t);
+                self.printfun(sprintf('%03d\t %.3f\t %.3f\t %s\t %s',...
+                    t, self.trials(t).time(1)-self.trials(1).time(1),...
+                    self.trials(t).time(1)-...
+                    self.trials(max([t-1 1])).time(1),...
+                    self.trials(t).condition.name,...
+                    mat2str(cell2mat(self.trials(t).response))));
+                % if you have set the soa field to a value greater than the
+                % sum total durations this will control lag
+                WaitSecs('UntilTime',...
+                    self.trials(1).time(1)+self.trials(t).timing);
             end
+            diary('off');
+            self.printfun('finished log');
+            self.printfun('DONE');
         end
 
         function initialisetrials(self,trialorder)
+            self.printfun('initialisetrials')
             % initialise log files in each condition
             [coninds,counts] = count_unique(trialorder);
             % prepare log struct arrays inside each condition
@@ -162,7 +187,8 @@ classdef Study < hgsetget & dynamicprops
             ntrials = length(trialorder);
             self.trials = struct('condition',...
                 num2cell(self.conditions(trialorder)),'response',[],...
-                'score',[],'time',[]);
+                'responsetime',[],'score',[],'time',[],'timing',...
+                num2cell(cumsum([self.conditions(trialorder).soa])));
         end
     end
 

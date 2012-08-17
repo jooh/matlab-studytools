@@ -6,7 +6,7 @@ classdef ImageEvent < StudyEvent
         tex = []; % texture handle
         rect = []; % Psychtoolbox rect
         window = []; % window handle
-        eventname = 'image';
+        name = 'image';
     end
 
     methods

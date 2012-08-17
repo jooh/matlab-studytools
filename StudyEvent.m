@@ -3,15 +3,16 @@ classdef StudyEvent < hgsetget & dynamicprops
     properties
         duration = 0; % how long to get called for
         units = 's'; % timing in s or scans (not yet supported)
-        %eventname = 'master'; % this field is useful for e.g. response logging
+        %name = 'master'; % this field is useful for e.g. response logging
         ncalls = 0;
         time = [];
         response = [];
+        responsetime = [];
         skiponresponse = 0;
     end
 
     properties (Abstract)
-        eventname
+        name
     end
 
     methods
