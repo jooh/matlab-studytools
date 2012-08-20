@@ -38,10 +38,14 @@ getArgs(varargin,{'k',[],'n',2,'B',[],'guidefun','HRF','models',[],...
 % Aguirre suggests setting B to a number divisible by k^2 to achieve an
 % even number of paths in each bin
 if ieNotDefined('B')
-    % Pick a number towards the middle of this range (10)
-    cands = 5:15;
-    inds = find(mod(k^2,cands)==0);
-    B = cands(inds(ceil(length(inds)/2)));
+    if k<5
+        B=k^2;
+    else
+        % Pick a number towards the middle of this range (10)
+        cands = 5:15;
+        inds = find(mod(k^2,cands)==0);
+        B = cands(inds(ceil(length(inds)/2)));
+    end
     assert(~isempty(B),'failed to find a suitable B')
 end
 
