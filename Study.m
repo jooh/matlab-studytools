@@ -75,7 +75,7 @@ classdef Study < hgsetget & dynamicprops
                     err = invoke(f.scanobj,'Initialize','');
                     assert(~err,'Keithley error')
                     assert(isnumeric(self.TR),'must set TR for scanner sync!')
-                    invoke(self.scanobj,'SetTimeout',double(20000)); % 20
+                    invoke(self.scanobj,'SetTimeout',double(200000)); % 200
                     invoke(self.scanobj,'SetMSPerSample',2);
                     self.printfun('running in scanner mode');
                 otherwise

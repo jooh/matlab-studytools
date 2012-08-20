@@ -1,7 +1,6 @@
 classdef FlipEvent < StudyEvent
     % subclass for StudyEvent.
     properties
-        actualtime = NaN;
         when = 0;
         window = [];
         dontclear = 0;
