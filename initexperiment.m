@@ -15,6 +15,8 @@ dbstop if error
 defs.expname = expname;
 % print useful info
 defs.verbose = 1;
+defs.windowed = 0;
+defs.location = 'pc';
 % print less useful info, run in windowed etc
 defs.debug = 0;
 defs.subject = [];
@@ -24,6 +26,12 @@ defs.stim.size = [];
 defs.studydir = studydir;
 defs.savedata = 1;
 par = varargs2structfields(varargin,defs,defs.verbose);
+
+if par.debug
+    par.windowed = 1;
+    par.savedata = 0;
+    par.verbose = 1;
+end
 
 % print functionality depends on verbosity
 global printfun
