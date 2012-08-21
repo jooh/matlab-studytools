@@ -18,10 +18,10 @@ classdef Study < hgsetget & dynamicprops
         oldresolution = struct;
         px2deg = [];
         deg2px = [];
-        bgcolour = [128 128 128];
-        colours = struct('white',[],'black',[],'grey',[]);
+        bgcolor = [128 128 128];
+        colors = struct('white',[],'black',[],'grey',[]);
         textpar = struct('font','tahoma','size',14,'style',0,...
-            'vspacing',1.4,'colour',[1 1 1],'txtwrap',50);
+            'vspacing',1.4,'color',[1 1 1],'txtwrap',50);
         xcenter = [];
         ycenter = [];
         conditions = Condition([]);
@@ -92,28 +92,28 @@ classdef Study < hgsetget & dynamicprops
                 (180/pi)) / self.resolution(1);
             % And the reciprocal
             self.deg2px = self.px2deg^-1;
-            % Figure out a text colour
-            if mean(self.bgcolour) > 200
+            % Figure out a text color
+            if mean(self.bgcolor) > 200
                 % black on light backgrounds
-                self.textpar.colour = [0 0 0];
+                self.textpar.color = [0 0 0];
             else
                 % white on dark backgrounds
-                self.textpar.colour = [255 255 255];
+                self.textpar.color = [255 255 255];
             end
             % open window
             if self.windowed
                 self.oldresolution = Screen('Resolution',self.screen);
                 res = [0 0 self.resolution];
                 [self.window self.rect] = Screen('OpenWindow',...
-                    self.screen,self.bgcolour,res);
+                    self.screen,self.bgcolor,res);
             else
                 self.oldresolution = Screen('Resolution',self.screen,...
                     self.resolution(1),self.resolution(2));
                 [self.window self.rect] = Screen('OpenWindow',...
-                    self.screen,self.bgcolour);
+                    self.screen,self.bgcolor);
             end
-            % set default bgcolour
-            %Screen(self.window,'FillRect',self.bgcolour);
+            % set default bgcolor
+            %Screen(self.window,'FillRect',self.bgcolor);
             % screen center
             self.xcenter = self.rect(3)/2;
             self.ycenter = self.rect(4)/2;
@@ -122,16 +122,16 @@ classdef Study < hgsetget & dynamicprops
                 GL_ONE_MINUS_SRC_ALPHA);
             % priority (0 for normal, 2 locks all non-Matlab)
             Priority(1);
-            % basic colours
-            self.colours.white = WhiteIndex(self.window); 
-            self.colours.black = BlackIndex(self.window);
-            self.colours.grey = ceil((...
-                self.colours.white+self.colours.black)/2); 
+            % basic color
+            self.colors.white = WhiteIndex(self.window); 
+            self.colors.black = BlackIndex(self.window);
+            self.colors.grey = ceil((...
+                self.colors.white+self.colors.black)/2); 
             % and fonts
             Screen('TextFont',self.window,self.textpar.font);
             Screen('TextSize',self.window,self.textpar.size);
             Screen('TextStyle',self.window,self.textpar.style);
-            Screen('TextColor',self.window,self.textpar.colour);
+            Screen('TextColor',self.window,self.textpar.color);
             HideCursor;
             Screen(self.window,'Flip');
         end

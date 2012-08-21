@@ -4,7 +4,7 @@ classdef FixationEvent < StudyEvent
         x = [];
         y = [];
         radius = [];
-        colour = [];
+        color = [];
         rect = []; % Psychtoolbox rect
         window = []; % window handle
         name = 'fixation';
@@ -24,10 +24,10 @@ classdef FixationEvent < StudyEvent
             if isempty(s.y)
                 s.y = st.ycenter;
             end
-            if isempty(s.colour)
-                % default font colour should be someting that contrasts
+            if isempty(s.color)
+                % default font color should be someting that contrasts
                 % with background
-                s.colour = st.textpar.colour;
+                s.color = st.textpar.color;
             end
             if isempty(s.rect)
                 s.rect = CenterRectOnPoint([0 0 radius radius],s.x,s.y);
@@ -37,7 +37,7 @@ classdef FixationEvent < StudyEvent
 
         function call(self)
             self.ncalls = self.ncalls+1;
-            Screen('FillOval',self.window,self.colour,self.rect);
+            Screen('FillOval',self.window,self.color,self.rect);
         end
     end
 end
