@@ -2,15 +2,19 @@
 % that the debruijn code on your path (so probably only support for
 % mac/linux).
 %
+% If called with k/n only, we get a 'pure' debruijn sequence without
+% path-guiding. If you want path-guiding you must define soa and models -
+% the remaining arguments can be inferred.
+%
 % MANDATORY INPUTS:
 % k: number of conditions (max 36)
+%
+% OPTIONAL INPUTS:
+% n: level of counterbalancing (default 2)
 % models: a single dissimilarity matrix (-1 for null entries) or a cell
 %   array of matrices (the guide function is determined by model 1, but
 %   detection power is reported for the other two as well)
 % soa: in ms
-%
-% OPTIONAL INPUTS:
-% n: level of counterbalancing (default 2)
 % B: bin size (we use k to find a sensible option if undefined)
 % guidefun: default 'HRF'
 % cachemodels: default 0. If 1, we save model text files with a SHA-1
@@ -24,16 +28,23 @@
 %
 % OUTPUTS:
 % seq: a sequence of k^n length with condition indices in 1:k range
+%
+% CONDITIONAL OUTPUTS: (only returned if guidefun, soa and models are
+% defined)
 % r: correlation between guidefun (HRF) and distances in sequence
 % dpow: relative detection power (proportion of variance in sequence that
 % survives passing through an HRF and a .01 Hz high pass filter) for each
 % input model
 %
-% [seq,r,dpow] = debruijn(varargin)
-function [seq,r,dpow] = debruijn(varargin)
+% [seq,[r],[dpow]] = debruijn(k,[n],varargin)
+function [seq,r,dpow] = debruijn(k,n,varargin)
 
-getArgs(varargin,{'k',[],'n',2,'B',[],'guidefun','HRF','models',[],...
+getArgs(varargin,{'B',[],'guidefun','HRF','models',[],...
     'soa',[],'cachemodels',0});
+
+if ieNotDefined('n')
+    n = 2;
+end
 
 % Aguirre suggests setting B to a number divisible by k^2 to achieve an
 % even number of paths in each bin
@@ -49,13 +60,19 @@ if ieNotDefined('B')
     assert(~isempty(B),'failed to find a suitable B')
 end
 
-basecmd = sprintf('debruijn -t %d %d %d %s',k,n,B,guidefun);
 
-if ismat(models)
+if ~ieNotDefined('models') && ismat(models)
     models = {models};
 end
 nmodels = length(models);
 assert(nmodels<=3,'only 3 models supported for now')
+
+if nmodels
+    basecmd = sprintf('debruijn -t %d %d %d %s',k,n,B,guidefun);
+else
+    basecmd = sprintf('debruijn -t %d %d',k,n);
+end
+
 % use system's tempdir if possible
 td = tempdir;
 if ieNotDefined('td')
@@ -85,7 +102,9 @@ for m = 1:nmodels
 end
 
 % Add final bits and run the beast
-basecmd = sprintf('%s -eval %f',basecmd,soa);
+if nmodels
+    basecmd = sprintf('%s -eval %f',basecmd,soa);
+end
 [err,res] = system(basecmd);
 assert(~err,['command failed with message: ' res]);
 
@@ -100,6 +119,13 @@ alphabet = unique(seqstr);
 seq = NaN([1 length(seqstr)]);
 for a = 1:length(alphabet)
     seq(seqstr==alphabet(a)) = a;
+end
+
+% shortcircuit here if we're done
+if ~nmodels
+    r = [];
+    dpow = [];
+    return
 end
 
 % Extract sequence descriptives
