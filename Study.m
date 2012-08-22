@@ -24,7 +24,9 @@ classdef Study < hgsetget & dynamicprops
             'vspacing',1.4,'color',[1 1 1],'txtwrap',50);
         xcenter = [];
         ycenter = [];
-        conditions = Condition([]);
+        conditions = Condition([]); % main events during runtrials
+        precondition = Condition([]); % run before main trial loop
+        postcondition = Condition([]); % run after main trial loop
         trials = []; % constructed by initialisetrials (can be subbed)
         printfun =[];
         logfile = '';
@@ -149,6 +151,10 @@ classdef Study < hgsetget & dynamicprops
             self.printfun(sprintf('running %d trials',ntrials));
             self.initialisetrials(trialorder);
             self.printfun(['logfile: ' self.logfile]);
+            % run precon - instructions, calibration, wait trigger etc
+            if ~isempty(self.precondition)
+                self.precondition.call;
+            end
             diary(self.logfile);
             self.printfun('TRIAL\t TIME\t CYCLE\t CONDITION\t RESPONSE\t');
             for t = 1:ntrials
@@ -169,6 +175,11 @@ classdef Study < hgsetget & dynamicprops
                 % sum total durations this will control lag
                 WaitSecs('UntilTime',...
                     self.trials(1).time(1)+self.trials(t).timing);
+            end
+            % postcon - score responses, display feedback, await scan stop
+            % etc
+            if ~isempty(self.postcondition)
+                self.postcondition.call;
             end
             diary('off');
             self.printfun('finished log');
