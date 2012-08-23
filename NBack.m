@@ -6,6 +6,7 @@ classdef NBack < Study
         responsename = '';
         keyind = 1;
         timeind = 1; % score RTs relative to this studyevent
+        conditionname = 'name'; % use custom field for flexible 1-back
     end
 
     methods
@@ -39,8 +40,8 @@ classdef NBack < Study
                 return
             end
             self.trials(t).score.wasrepeat = strcmp(...
-                self.trials(t).condition.name,...
-                self.trials(t-self.n).condition.name);
+                self.trials(t).condition.(self.conditionname),...
+                self.trials(t-self.n).condition.(self.conditionname));
             % copy score to condition as well
             self.trials(t).condition.result(...
                 self.trials(t).condition.ncalls).score = ...
