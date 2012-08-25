@@ -13,7 +13,7 @@ classdef TextEvent < StudyEvent
     end
 
     methods
-        function s = FixationEvent(textstr,st,varargin)
+        function s = TextEvent(textstr,st,varargin)
             s.textstr = textstr;
             s = varargs2structfields(varargin,s);
             if isempty(s.x)

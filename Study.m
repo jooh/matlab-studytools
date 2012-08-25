@@ -1,7 +1,6 @@
 classdef Study < hgsetget & dynamicprops
     % Master class for running cognitive experiments
     properties
-        units = 's'; % timing in s or scans (not yet supported)
         debug = 0; % shorthand for debug=1, verbose=1
         verbose = 0;
         windowed = 0;
@@ -30,7 +29,8 @@ classdef Study < hgsetget & dynamicprops
         trials = []; % constructed by initialisetrials (can be subbed)
         printfun =[];
         logfile = '';
-        timestart = []; % Psychtoolbox GetSecs at runtrials call
+        timestart = []; % First scan/GetSecs time stamp in run
+        timecontrol = []; % SecondTiming or ScanTiming instance 
     end
 
     methods
@@ -158,8 +158,10 @@ classdef Study < hgsetget & dynamicprops
             end
             diary(self.logfile);
             self.printfun('TRIAL\t TIME\t CYCLE\t CONDITION\t RESPONSE\t');
-            self.timestart = GetSecs;
+            % start second / scan timer (maybe count dummies)
+            self.timestart = self.timecontrol.begin;
             for t = 1:ntrials
+                trialstart = self.timecontrol.check;
                 self.trials(t).condition.call;
                 % update the central trial log with the new result from
                 % the condition instance
@@ -175,8 +177,10 @@ classdef Study < hgsetget & dynamicprops
                     mat2str(cell2mat(self.trials(t).response))));
                 % if you have set the soa field to a value greater than the
                 % sum total durations this will control lag
-                WaitSecs('UntilTime',...
-                    self.trials(1).time(1)+self.trials(t).timing);
+                % TODO assess how bad this is for lag compared to standard
+                % WaitSecs('UntilTime',x)
+                self.timecontrol.waituntil(trialstart + ...
+                    self.trials(t).timing);
             end
             % postcon - score responses, display feedback, await scan stop
             % etc
@@ -199,9 +203,17 @@ classdef Study < hgsetget & dynamicprops
             % and a global log file
             ntrials = length(trialorder);
             self.trials = struct('condition',...
-                num2cell(self.conditions(trialorder)),'response',[],...
+                num2cell(self.conditions(trialorder)),...
+                'response',[],...
                 'responsetime',[],'score',[],'time',[],'timing',...
                 num2cell(cumsum([self.conditions(trialorder).soa])));
+            % This loop sets up the cell arrays etc with appropriate
+            % nevents for each trial
+            for t = 1:length(self.trials)
+                self.trials(t).response = self.trials(t).condition.response;
+                self.trials(t).responsetime = self.trials(t).response;
+                self.trials(t).time = self.trials(t).condition.time;
+            end
         end
     end
 

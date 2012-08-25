@@ -12,6 +12,7 @@ classdef Condition < hgsetget & dynamicprops
         soa = 0; % 50ms above the sum of durations should be enough
         name = 'condition';
         timing = [];
+        timecontrol = []; % ScanTiming / SecondTiming 
     end
 
     methods
@@ -44,15 +45,12 @@ classdef Condition < hgsetget & dynamicprops
         end
 
         function call(self)
-            calltime = GetSecs;
+            calltime = self.timecontrol.check;
             self.ncalls = self.ncalls+1;
             for e = 1:self.nevents
-                self.result(self.ncalls).time(e) = GetSecs;
+                self.result(self.ncalls).time(e) = self.timecontrol.check;
                 done = 0;
                 responded = 0;
-                % TODO - somehow access pulse state here, or if location is
-                % PC, return inf.
-                startpulse = getlastpulse;
                 while ~done
                     self.studyevents{e}.call;
                     if ~isempty(self.studyevents{e}.response)
@@ -72,11 +70,9 @@ classdef Condition < hgsetget & dynamicprops
                     % check for skipahead flag and timeout
                     skip = responded && self.studyevents{e}.skiponresponse;
                     % now absolute timings to reduce lag
-                    outoftime = calltime+self.timing(e) < GetSecs;
-                    % check if enough pulses have passed
-                    outofpulses = (self.studyevents{e}.waitpulses + ...
-                        startpulse) <= getlastpulse;
-                    done = skip || outoftime || outofpulses;
+                    outoftime = (calltime + self.timing(e)) < ...
+                        self.timecontrol.check;
+                    done = skip || outoftime;
                 end
             end
         end
