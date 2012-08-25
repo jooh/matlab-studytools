@@ -9,6 +9,7 @@ classdef StudyEvent < hgsetget & dynamicprops
         response = [];
         responsetime = [];
         skiponresponse = 0;
+        waitpulses = 0;
     end
 
     properties (Abstract)

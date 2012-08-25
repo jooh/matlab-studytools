@@ -30,6 +30,7 @@ classdef Study < hgsetget & dynamicprops
         trials = []; % constructed by initialisetrials (can be subbed)
         printfun =[];
         logfile = '';
+        timestart = []; % Psychtoolbox GetSecs at runtrials call
     end
 
     methods
@@ -157,6 +158,7 @@ classdef Study < hgsetget & dynamicprops
             end
             diary(self.logfile);
             self.printfun('TRIAL\t TIME\t CYCLE\t CONDITION\t RESPONSE\t');
+            self.timestart = GetSecs;
             for t = 1:ntrials
                 self.trials(t).condition.call;
                 % update the central trial log with the new result from

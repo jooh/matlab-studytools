@@ -50,6 +50,9 @@ classdef Condition < hgsetget & dynamicprops
                 self.result(self.ncalls).time(e) = GetSecs;
                 done = 0;
                 responded = 0;
+                % TODO - somehow access pulse state here, or if location is
+                % PC, return inf.
+                startpulse = getlastpulse;
                 while ~done
                     self.studyevents{e}.call;
                     if ~isempty(self.studyevents{e}.response)
@@ -70,7 +73,10 @@ classdef Condition < hgsetget & dynamicprops
                     skip = responded && self.studyevents{e}.skiponresponse;
                     % now absolute timings to reduce lag
                     outoftime = calltime+self.timing(e) < GetSecs;
-                    done = skip || outoftime;
+                    % check if enough pulses have passed
+                    outofpulses = (self.studyevents{e}.waitpulses + ...
+                        startpulse) <= getlastpulse;
+                    done = skip || outoftime || outofpulses;
                 end
             end
         end

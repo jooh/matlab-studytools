@@ -7,6 +7,10 @@ classdef NBack < Study
         keyind = 1;
         timeind = 1; % score RTs relative to this studyevent
         conditionname = 'name'; % use custom field for flexible 1-back
+        nhit = 0; % running totals
+        nmiss = 0;
+        nfa = 0; 
+        ncr = 0;
     end
 
     methods
@@ -46,6 +50,16 @@ classdef NBack < Study
             self.trials(t).condition.result(...
                 self.trials(t).condition.ncalls).score = ...
                 self.trials(t).score;
+            % update running totals
+            self.nhit = self.nhit + (self.trials(t).score.didrespond && ...
+                self.trials(t).score.wasrepeat);
+            self.nfa = self.nfa + (self.trials(t).score.didrespond && ...
+                ~self.trials(t).score.wasrepeat);
+            self.ncr = self.ncr + (~self.trials(t).score.didrespond && ...
+                ~self.trials(t).score.wasrepeat);
+            self.nmiss = self.nmiss + ...
+                (~self.trials(t).score.didrespond && ...
+                self.trials(t).score.wasrepeat);
         end
     end
 end
