@@ -31,8 +31,37 @@ classdef Condition < hgsetget & dynamicprops
             t.response = cell(1,t.nevents);
             % extract vector of durations
             durations = cellfun(@(x)x.duration,t.studyevents);
-            % ideal timings relative to onset
-            t.timing = cumsum(durations);
+            % ideal timing relative to onset
+            t.preparetiming(durations);
+        end
+
+        function preparetiming(self,durations)
+            % initialise the timing either based on a simple cumsum call of
+            % durations or something a bit more complicated when inf
+            % durations are present
+            infcheck = isinf(durations);
+            if any(infcheck)
+                % can't do absolute timings, so need to ensure that you
+                % haven't attempted to inf and THEN do something with a
+                % duration
+                firstinf = find(infcheck,1,'first');
+                % there's only a problem if you didn't put the inf last
+                if firstinf ~= self.nevents
+                    hasdur = durations > 0;
+                    isbad = hasdur & ~infcheck;
+                    assert(~any(isbad((firstinf+1):end)),...
+                        'non-zero, non-inf durations after inf duration');
+                end
+                % set timings to equal durations - so either move forward
+                % immediately (duration 0), or wait forever for a response
+                % (duration inf)
+                self.timing = durations;
+            else
+                % if you've stayed away from infinite durations this is
+                % much easier
+                % ideal timings relative to onset
+                self.timing = cumsum(durations);
+            end
         end
 
         function preparelog(self,ntrials)

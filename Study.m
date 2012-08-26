@@ -12,7 +12,7 @@ classdef Study < hgsetget & dynamicprops
         validkeys = {'v','b','n','m'};
         location = 'pc';
         TR = [];
-        scanobj = [];
+        scanobj = ScanObjNull;
         resolution = [1024 768];
         oldresolution = struct;
         px2deg = [];
@@ -104,6 +104,9 @@ classdef Study < hgsetget & dynamicprops
                 self.textpar.color = [255 255 255];
             end
             % open window
+            self.printfun('---------- ---------- ----------')
+            self.printfun('---------- PPT GOOBLEDEGOOK ----------')
+            self.printfun('---------- ---------- ----------')
             if self.windowed
                 self.oldresolution = Screen('Resolution',self.screen);
                 res = [0 0 self.resolution];
@@ -115,6 +118,9 @@ classdef Study < hgsetget & dynamicprops
                 [self.window self.rect] = Screen('OpenWindow',...
                     self.screen,self.bgcolor);
             end
+            self.printfun('---------- ---------- ----------')
+            self.printfun('---------- / PPT GOOBLEDEGOOK ----------')
+            self.printfun('---------- ---------- ----------')
             % set default bgcolor
             %Screen(self.window,'FillRect',self.bgcolor);
             % screen center
@@ -148,6 +154,8 @@ classdef Study < hgsetget & dynamicprops
         function runtrials(self,trialorder)
             assert(isempty(self.trials),'TODO: handle repeated runs')
             self.printfun('runtrials')
+            % DEBUG
+            trialorder = trialorder(1:10);
             ntrials = length(trialorder);
             self.printfun(sprintf('running %d trials',ntrials));
             self.initialisetrials(trialorder);
@@ -161,7 +169,6 @@ classdef Study < hgsetget & dynamicprops
             % start second / scan timer (maybe count dummies)
             self.timestart = self.timecontrol.begin;
             for t = 1:ntrials
-                trialstart = self.timecontrol.check;
                 self.trials(t).condition.call;
                 % update the central trial log with the new result from
                 % the condition instance
@@ -169,7 +176,7 @@ classdef Study < hgsetget & dynamicprops
                     self.trials(t).condition.result(...
                     self.trials(t).condition.ncalls));
                 self.scoretrial(t);
-                self.printfun(sprintf('%03d\t %.3f\t %.3f\t %s\t %s',...
+                self.printfun(sprintf('%03d\t %04.3f\t %02.3f\t %s\t %s',...
                     t, self.trials(t).time(1)-self.trials(1).time(1),...
                     self.trials(t).time(1)-...
                     self.trials(max([t-1 1])).time(1),...
@@ -179,7 +186,7 @@ classdef Study < hgsetget & dynamicprops
                 % sum total durations this will control lag
                 % TODO assess how bad this is for lag compared to standard
                 % WaitSecs('UntilTime',x)
-                self.timecontrol.waituntil(trialstart + ...
+                self.timecontrol.waituntil(self.timestart + ...
                     self.trials(t).timing);
             end
             % postcon - score responses, display feedback, await scan stop

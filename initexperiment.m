@@ -65,6 +65,7 @@ if madedir || ~exist(submat,'file')
 else
     subdata = loadbetter(submat);
     par.sessionI = length(subdata)+1;
+    printfun(sprintf('running experiment session %d',par.sessionI));
 end
 
 % Set randomisation
