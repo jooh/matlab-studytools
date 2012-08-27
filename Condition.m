@@ -71,6 +71,8 @@ classdef Condition < hgsetget & dynamicprops
                 repmat({self.response},[ntrials 1]),'responsetime',...
                 repmat({self.response},[ntrials 1]),...
                 'score',[]);
+            % ensure ncalls is 0 (not always the case if doing subruns)
+            self.ncalls = 0;
         end
 
         function call(self)

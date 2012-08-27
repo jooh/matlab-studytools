@@ -7,10 +7,7 @@ classdef NBack < Study
         keyind = 1;
         timeind = 1; % score RTs relative to this studyevent
         conditionname = 'name'; % use custom field for flexible 1-back
-        nhit = 0; % running totals
-        nmiss = 0;
-        nfa = 0; 
-        ncr = 0;
+        score = struct;
     end
 
     methods
@@ -20,6 +17,13 @@ classdef NBack < Study
             if isempty(s.responsename)
                 s.responsename = 'responsecheck';
             end
+        end
+
+        function initialisescore(self,trialorder);
+            % prepare the score field for study (clearing out whatever is
+            % already in there)
+            self.score = struct('ntrials',length(trialorder),...
+                'nhit',0,'nmiss',0,'nfa',0,'ncr',0,'acc',[],'d',[]);
         end
 
         function scoretrial(self,t)
@@ -51,13 +55,16 @@ classdef NBack < Study
                 self.trials(t).condition.ncalls).score = ...
                 self.trials(t).score;
             % update running totals
-            self.nhit = self.nhit + (self.trials(t).score.didrespond && ...
+            self.score.nhit = self.score.nhit + ...
+                (self.trials(t).score.didrespond && ...
                 self.trials(t).score.wasrepeat);
-            self.nfa = self.nfa + (self.trials(t).score.didrespond && ...
+            self.score.nfa = self.score.nfa + ...
+                (self.trials(t).score.didrespond && ...
                 ~self.trials(t).score.wasrepeat);
-            self.ncr = self.ncr + (~self.trials(t).score.didrespond && ...
+            self.score.ncr = self.score.ncr + ...
+                (~self.trials(t).score.didrespond && ...
                 ~self.trials(t).score.wasrepeat);
-            self.nmiss = self.nmiss + ...
+            self.score.nmiss = self.score.nmiss + ...
                 (~self.trials(t).score.didrespond && ...
                 self.trials(t).score.wasrepeat);
         end

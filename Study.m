@@ -33,6 +33,11 @@ classdef Study < hgsetget & dynamicprops
         timecontrol = []; % SecondTiming or ScanTiming instance 
     end
 
+    properties (Abstract)
+        score;  % summary descriptives in subclass
+    end
+
+
     methods
         function s = Study(varargin)
             if nargin==0
@@ -152,10 +157,10 @@ classdef Study < hgsetget & dynamicprops
         end
 
         function runtrials(self,trialorder)
-            assert(isempty(self.trials),'TODO: handle repeated runs')
             self.printfun('runtrials')
-            % DEBUG
-            trialorder = trialorder(1:10);
+            if ~isempty(self.trials)
+                self.printfun('existing trials will be discarded')
+            end
             ntrials = length(trialorder);
             self.printfun(sprintf('running %d trials',ntrials));
             self.initialisetrials(trialorder);
@@ -184,13 +189,9 @@ classdef Study < hgsetget & dynamicprops
                     mat2str(cell2mat(self.trials(t).response))));
                 % if you have set the soa field to a value greater than the
                 % sum total durations this will control lag
-                % TODO assess how bad this is for lag compared to standard
-                % WaitSecs('UntilTime',x)
                 self.timecontrol.waituntil(self.timestart + ...
                     self.trials(t).timing);
             end
-            % postcon - score responses, display feedback, await scan stop
-            % etc
             if ~isempty(self.postcondition)
                 self.postcondition.call;
             end
@@ -221,10 +222,14 @@ classdef Study < hgsetget & dynamicprops
                 self.trials(t).responsetime = self.trials(t).response;
                 self.trials(t).time = self.trials(t).condition.time;
             end
+            % And finally, a global global result file for broad
+            % descriptives across trials (computed by scoretrial)
+            self.initialisescore(trialorder)
         end
     end
 
     methods (Abstract)
         scoretrial(self,t)
+        initialisescore(self)
     end
 end
