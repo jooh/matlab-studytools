@@ -1,7 +1,7 @@
 classdef ImageEvent < StudyEvent
     % StudyEvent subclass for presenting images
     properties
-        image = []; % image
+        %image = []; % image
         alpha = []; % alpha layer
         tex = []; % texture handle
         rect = []; % Psychtoolbox rect
@@ -13,15 +13,15 @@ classdef ImageEvent < StudyEvent
         function s = ImageEvent(im,st,varargin)
         % Initialise event by populating fields, possibly making texture
             s = varargs2structfields(varargin,s);
-            s.image = im;
+            %s.image = im;
             s.window = st.window;
             if ieNotDefined('alpha')
-                alpha = ones(size(im));
+                s.alpha = ones(size(im));
             end
             % do we need to make texture?
             if isempty(s.tex)
                 s.tex = Screen('MakeTexture',s.window,...
-                    cat(3,s.image,uint8(255*s.alpha)));
+                    cat(3,im,uint8(255*s.alpha)));
             end
         end
 

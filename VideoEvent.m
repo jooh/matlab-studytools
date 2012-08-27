@@ -1,7 +1,7 @@
 classdef VideoEvent < StudyEvent
     % StudyEvent subclass for presenting a video frame 
     properties
-        videoframes = []; % [x y color frame] matrix
+        %videoframes = []; % [x y color frame] matrix
         alpha = []; % alpha layer
         tex = []; % texture handle
         rect = []; % Psychtoolbox rect
@@ -19,7 +19,7 @@ classdef VideoEvent < StudyEvent
         function s = VideoEvent(vidframes,st,varargin)
         % Initialise event by populating fields, possibly making texture
             s = varargs2structfields(varargin,s);
-            s.videoframes = vidframes;
+            %s.videoframes = vidframes;
             s.window = st.window;
             if ieNotDefined('alpha')
                 alpha = ones(size(vidframes));
@@ -30,7 +30,7 @@ classdef VideoEvent < StudyEvent
                 s.tex = NaN([1 s.nframe]);
                 for f = 1:s.nframe
                     s.tex(f) = Screen('MakeTexture',s.window,...
-                    cat(3,s.videoframes(:,:,:,f),uint8(255*s.alpha)));
+                    cat(3,vidframes(:,:,:,f),uint8(255*s.alpha)));
                 end
             end
             if ieNotDefined('frameind')

@@ -13,6 +13,7 @@ classdef Condition < hgsetget & dynamicprops
         name = 'condition';
         timing = [];
         timecontrol = []; % ScanTiming / SecondTiming 
+        logresponses = 0;
     end
 
     methods
@@ -70,7 +71,7 @@ classdef Condition < hgsetget & dynamicprops
                 repmat({self.time},[ntrials 1]),'response',...
                 repmat({self.response},[ntrials 1]),'responsetime',...
                 repmat({self.response},[ntrials 1]),...
-                'score',[]);
+                'score',[],'endtime',[]);
             % ensure ncalls is 0 (not always the case if doing subruns)
             self.ncalls = 0;
         end
@@ -86,17 +87,21 @@ classdef Condition < hgsetget & dynamicprops
                     self.studyevents{e}.call;
                     if ~isempty(self.studyevents{e}.response)
                         responded = 1;
-                        % add response to log
-                        self.result(self.ncalls).response{e} = ...
-                            [self.result(self.ncalls).response{e} ...
-                            self.studyevents{e}.response];
-                        % remove from studyevent (prevent handle weirdness)
-                        self.studyevents{e}.response = [];
-                        self.result(self.ncalls).responsetime{e} = ...
-                            [self.result(self.ncalls).responsetime{e} ...
-                            self.studyevents{e}.responsetime];
-                        % remove from studyevent (prevent handle weirdness)
-                        self.studyevents{e}.responsetime = [];
+                        if self.logresponses
+                            % add response to log
+                            self.result(self.ncalls).response{e} = ...
+                                [self.result(self.ncalls).response{e} ...
+                                self.studyevents{e}.response];
+                            % remove from studyevent (prevent handle
+                            % weirdness)
+                            self.studyevents{e}.response = [];
+                            self.result(self.ncalls).responsetime{e} = ...
+                                [self.result(self.ncalls).responsetime{e} ...
+                                self.studyevents{e}.responsetime];
+                            % remove from studyevent (prevent handle
+                            % weirdness)
+                            self.studyevents{e}.responsetime = [];
+                        end
                     end
                     % check for skipahead flag and timeout
                     skip = responded && self.studyevents{e}.skiponresponse;
@@ -106,6 +111,8 @@ classdef Condition < hgsetget & dynamicprops
                     done = skip || outoftime;
                 end
             end
+            % store what time we got out of the condition
+            self.result(self.ncalls).endtime = self.timecontrol.check;
         end
     end
 end

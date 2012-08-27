@@ -1,7 +1,7 @@
 classdef Study < hgsetget & dynamicprops
     % Master class for running cognitive experiments
     properties
-        debug = 0; % shorthand for debug=1, verbose=1
+        debug = 0; % shorthand for windowed=1, verbose=1
         verbose = 0;
         windowed = 0;
         screen = [];
@@ -165,12 +165,13 @@ classdef Study < hgsetget & dynamicprops
             self.printfun(sprintf('running %d trials',ntrials));
             self.initialisetrials(trialorder);
             self.printfun(['logfile: ' self.logfile]);
-            % run precon - instructions, calibration, wait trigger etc
-            if ~isempty(self.precondition)
-                self.precondition.call;
-            end
             diary(self.logfile);
             self.printfun('TRIAL\t TIME\t CYCLE\t CONDITION\t RESPONSE\t');
+            % run precon - instructions, calibration, wait trigger etc
+            if ~isempty(self.precondition)
+                self.printfun('running precondition')
+                self.precondition.call;
+            end
             % start second / scan timer (maybe count dummies)
             self.timestart = self.timecontrol.begin;
             for t = 1:ntrials
@@ -193,6 +194,7 @@ classdef Study < hgsetget & dynamicprops
                     self.trials(t).timing);
             end
             if ~isempty(self.postcondition)
+                self.printfun('running postcondition')
                 self.postcondition.call;
             end
             diary('off');
@@ -210,10 +212,11 @@ classdef Study < hgsetget & dynamicprops
             end
             % and a global log file
             ntrials = length(trialorder);
+            % NB must be in alphabetical order to work with catstruct
             self.trials = struct('condition',...
-                num2cell(self.conditions(trialorder)),...
-                'response',[],...
-                'responsetime',[],'score',[],'time',[],'timing',...
+                num2cell(self.conditions(trialorder)),'endtime',[],...
+                'response',[],'responsetime',[],'score',[],'time',[],...
+                'timing',...
                 num2cell(cumsum([self.conditions(trialorder).soa])));
             % This loop sets up the cell arrays etc with appropriate
             % nevents for each trial
