@@ -25,6 +25,7 @@ defs.redostims = 0;
 defs.stim.size = [];
 defs.studydir = studydir;
 defs.savedata = 1;
+defs.prefix = '';
 par = varargs2structfields(varargin,defs,defs.verbose);
 
 if par.debug
