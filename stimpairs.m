@@ -24,7 +24,7 @@ function res = stimpairs(stimstruct,varargin)
 
 getArgs(varargin,{'nrepeats',1,'stimsize',9,'location','pc',...
     'windowed',0,'verbose',0,'stimoptions',struct('stimtype','video',...
-    'framerate',24'),'trialinds',[],'ntrials',Inf,'bgcolor',[.5 .5 .5]});
+    'framerate',24'),'trialinds',[],'ntrials',[],'bgcolor',[.5 .5 .5]});
 
 % make sure if uint8 range
 if all(bgcolor <= 1)
@@ -65,6 +65,10 @@ if ieNotDefined('trialinds')
     res.trialinds = randpermrep(npofp,npossibletrials,0);
 else
     res.trialinds = trialinds;
+end
+
+if ieNotDefined('ntrials')
+    ntrials = length(res.trialinds);
 end
 
 if verbose
