@@ -15,8 +15,8 @@ classdef FixationEvent < StudyEvent
         % Initialise event by populating fields, possibly making texture
             s = varargs2structfields(varargin,s);
             if isempty(s.radius)
-                % default size 1/8 of a degree
-                radius = st.deg2px * 1/8;
+                % default size 1/4 of a degree
+                radius = st.deg2px * 1/4;
             end
             if isempty(s.x)
                 s.x = st.xcenter;
