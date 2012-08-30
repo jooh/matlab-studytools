@@ -21,7 +21,7 @@ classdef ScanTiming < Timing
         function scan = begin(self)
             invoke(self.scanobj,'StartExperiment',self.tr);
             % run through dummies
-            self.waituntil(self.ndummies-1);
+            self.waituntil(max([0 self.ndummies-1]));
             % figure out tr
             oldtr = self.tr;
             % should now have an ok idea of what the actual tr is
@@ -32,7 +32,7 @@ classdef ScanTiming < Timing
             [self.first,scan] = deal(self.check);
             % quick debug - if this is not true I have misunderstood
             % something about scannersync
-            assert(self.first == self.ndummies);
+            assert(self.first == self.ndummies,'missed a dummy?');
         end
 
         function tim = check(self)
@@ -40,14 +40,14 @@ classdef ScanTiming < Timing
         % previous and current properties
         % tim = check;
             self.previous = self.current;
-            [self.current,tim] = deal(invoke(self.scanobj,scanobj,...
-                'GetLastPulseNum'));
+            [self.current,tim] = deal(invoke(self.scanobj,...
+                'GetLastPulseNum',0));
         end
 
         function waituntil(self,abstime)
         % keep synchronising until check returns abstime
         % waituntil(vol)
-            while self.check ~= abstime
+            while self.check < abstime
                 invoke(self.scanobj,'SynchroniseExperiment',1,0);
             end
         end
@@ -58,11 +58,11 @@ classdef ScanTiming < Timing
             invoke(self.scanobj,'CheckPulseSynchronyForTime',s*1e3);
         end
 
-        function tr = estimatetr(self);
+        function tr = estimatetr(self)
         % return an estimate of the tr (in ms) from scanobj. Will be more
         % accurate the more time you spend on syncseconds or waituntil.
         % tr = estimatetr;
-            [tr,self.tr] deal(invoke(self.scanobj,'GetMeasuredTR'));
+            [tr,self.tr] = deal(invoke(self.scanobj,'GetMeasuredTR'));
         end
     end
 end

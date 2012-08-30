@@ -14,6 +14,7 @@ dbstop if error
 % support for a new argument.  These are the stock settings
 defs.expname = expname;
 % print useful info
+defs.parallel = 0;
 defs.verbose = 1;
 defs.windowed = 0;
 defs.location = 'pc';
@@ -85,11 +86,13 @@ subdata(par.sessionI).expdir = expdir;
 % (res and notes get filled in at the end)
 
 % try matlabpool
-try
-    if matlabpool('size') == 0
-        % start default matlabpool config
-        matlabpool;
+if par.parallel
+    try
+        if matlabpool('size') == 0
+            % start default matlabpool config
+            matlabpool;
+        end
+    catch
+        printfun('parallel processing is not available')
     end
-catch
-    printfun('parallel processing is not available')
 end
