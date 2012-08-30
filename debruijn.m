@@ -46,21 +46,6 @@ if ieNotDefined('n')
     n = 2;
 end
 
-% Aguirre suggests setting B to a number divisible by k^2 to achieve an
-% even number of paths in each bin
-if ieNotDefined('B')
-    if k<5
-        B=k^2;
-    else
-        % Pick a number towards the middle of this range (10)
-        cands = 5:15;
-        inds = find(mod(k^2,cands)==0);
-        B = cands(inds(ceil(length(inds)/2)));
-    end
-    assert(~isempty(B),'failed to find a suitable B')
-end
-
-
 if ~ieNotDefined('models') && ismat(models)
     models = {models};
 end
@@ -71,6 +56,20 @@ if nmodels
     basecmd = sprintf('debruijn -t %d %d %d %s',k,n,B,guidefun);
 else
     basecmd = sprintf('debruijn -t %d %d',k,n);
+end
+
+% Aguirre suggests setting B to a number divisible by k^2 to achieve an
+% even number of paths in each bin
+if ieNotDefined('B') && nmodels
+    if k<5
+        B=k^2;
+    else
+        % Pick a number towards the middle of this range (10)
+        cands = 5:15;
+        inds = find(mod(k^2,cands)==0);
+        B = cands(inds(ceil(length(inds)/2)));
+    end
+    assert(~isempty(B),'failed to find a suitable B')
 end
 
 % use system's tempdir if possible

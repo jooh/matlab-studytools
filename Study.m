@@ -228,6 +228,14 @@ classdef Study < hgsetget & dynamicprops
             % And finally, a global global result file for broad
             % descriptives across trials (computed by scoretrial)
             self.initialisescore(trialorder)
+            t_end = self.trials(end).timing + ...
+                self.trials(end).condition.soa;
+            if isinf(t_end) || isnan(t_end)
+                self.printfun('run duration estimate not possible')
+            else
+                self.printfun(sprintf('run duration: %.2f minutes',...
+                    t_end/60));
+            end
         end
     end
 
