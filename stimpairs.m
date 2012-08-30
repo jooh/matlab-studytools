@@ -67,8 +67,16 @@ else
     res.trialinds = trialinds;
 end
 
+ninds = length(res.trialinds);
 if ieNotDefined('ntrials')
-    ntrials = length(res.trialinds);
+    ntrials = ninds;
+end
+
+
+if ntrials > ninds
+    fprintf([nstr 'asked for %d but only %d trials available\n'],...
+        ntrials,ninds)
+    ntrials = ninds;
 end
 
 if verbose
