@@ -2,19 +2,18 @@ classdef ButtonboxCheck < ResponseCheck
     % ButtonboxCheck < StudyEvent subclass for logging button responses
     properties
         scanobj = [];
+        keyboardhand = KeyboardCheck;
     end
 
     methods
-        function s = ButtonboxCheck(st,varargin)
+        function s = ButtonboxCheck(varargin)
             s = varargs2structfields(varargin,s);
-            s.validkeys = st.validkeys;
-            s.scanobj = st.scanobj;
         end
 
         function [respkey,resptime] = checkkeys(self);
             respk = bitand(30,invoke(self.scanobj,'GetResponse'));
             rawtime = GetSecs;
-            keyisdown = any(respk)
+            keyisdown = respk ~= 30;
             resptime = [];
             respkey = [];
             if keyisdown
@@ -32,6 +31,8 @@ classdef ButtonboxCheck < ResponseCheck
                 self.keyisdown = 0;
                 self.lastkey = NaN;
             end
+            % check for escape key on keyboard
+            self.keyboardhand.call;
         end
     end
 end

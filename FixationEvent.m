@@ -16,7 +16,7 @@ classdef FixationEvent < StudyEvent
             s = varargs2structfields(varargin,s);
             if isempty(s.radius)
                 % default size 1/4 of a degree
-                radius = st.deg2px * 1/4;
+                radius = st.deg2px * 1/5;
             end
             if isempty(s.x)
                 s.x = st.xcenter;
@@ -30,7 +30,8 @@ classdef FixationEvent < StudyEvent
                 s.color = st.textpar.color;
             end
             if isempty(s.rect)
-                s.rect = CenterRectOnPoint([0 0 radius radius],s.x,s.y);
+                s.rect = round(CenterRectOnPoint([0 0 radius radius],...
+                    s.x,s.y));
             end
             s.window = st.window;
         end

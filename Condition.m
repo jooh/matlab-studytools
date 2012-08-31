@@ -13,7 +13,7 @@ classdef Condition < hgsetget & dynamicprops
         name = 'condition';
         timing = [];
         timecontrol = []; % ScanTiming / SecondTiming 
-        logresponses = 0;
+        logresponses = 1;
     end
 
     methods

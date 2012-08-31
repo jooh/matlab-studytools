@@ -76,7 +76,9 @@ classdef ScanPreCondition < Condition
             end
             % ok, all events done - time for scanner sync
             self.timecontrol.begin;
+            fprintf('BEGAN\n')
             self.result(self.ncalls).endtime = self.timecontrol.check;
+            fprintf('CHECKED\n')
         end
     end
 end

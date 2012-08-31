@@ -9,7 +9,9 @@ classdef Study < hgsetget & dynamicprops
         rect = [];
         totdist = 500;
         screenwidth = 380;
-        validkeys = {'v','b','n','m'};
+        keyboardkeys = {'v','b','n','m'};
+        buttonboxkeys = [28 26 24 22];
+        validkeys = [];
         location = 'pc';
         TR = [];
         scanobj = ScanObjNull;
@@ -65,6 +67,8 @@ classdef Study < hgsetget & dynamicprops
                     datestr(now,'yyyy_mm_dd_HHMM')));
             end
             KbName('UnifyKeyNames');
+            % always convert key presses to something recognisable
+            self.keyboardkeys = KbName(self.keyboardkeys);
             switch self.location
                 case 'pc'
                     screens = Screen('Screens');
@@ -72,15 +76,15 @@ classdef Study < hgsetget & dynamicprops
                     self.totdist = '500';
                     self.screenwidth = '380';
                     % assume you've entered a cell array of keys
-                    self.validkeys = KbName(self.validkeys);
+                    self.validkeys = self.keyboardkeys
                     self.printfun('running in PC mode');
                 case 'mri'
                     self.screen = 0;
                     self.totdist = 913;
                     self.screenwidth = 268;
-                    self.validkeys = [28 26 24 22];
+                    self.validkeys = self.buttonboxkeys;
                     self.scanobj = actxserver('MRISync.ScannerSync');
-                    err = invoke(f.scanobj,'Initialize','');
+                    err = invoke(self.scanobj,'Initialize','');
                     assert(~err,'Keithley error')
                     assert(isnumeric(self.TR),'must set TR for scanner sync!')
                     invoke(self.scanobj,'SetTimeout',double(200000)); % 200
@@ -228,6 +232,14 @@ classdef Study < hgsetget & dynamicprops
             % And finally, a global global result file for broad
             % descriptives across trials (computed by scoretrial)
             self.initialisescore(trialorder)
+            t_end = self.trials(end).timing + ...
+                self.trials(end).condition.soa;
+            if isinf(t_end) || isnan(t_end)
+                self.printfun('run duration estimate not possible')
+            else
+                self.printfun(sprintf('run duration: %.2f minutes',...
+                    t_end/60));
+            end
         end
     end
 
