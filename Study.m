@@ -1,6 +1,7 @@
 classdef Study < hgsetget & dynamicprops
     % Master class for running cognitive experiments
     properties
+        quietppt = 1;
         debug = 0; % shorthand for windowed=1, verbose=1
         verbose = 0;
         windowed = 0;
@@ -124,9 +125,13 @@ classdef Study < hgsetget & dynamicprops
                 fprintf(self.ET_serial,'ET_REC');
             end
             % open window
-            self.printfun('---------- ---------- ----------')
-            self.printfun('---------- PPT GOOBLEDEGOOK ----------')
-            self.printfun('---------- ---------- ----------')
+            if self.quietppt
+                Screen('Preference','Verbosity',0);
+            else
+                self.printfun('---------- ---------- ----------')
+                self.printfun('---------- PPT GOOBLEDEGOOK ----------')
+                self.printfun('---------- ---------- ----------')
+            end
             if self.windowed
                 self.oldresolution = Screen('Resolution',self.screen);
                 res = [0 0 self.resolution];
@@ -138,9 +143,11 @@ classdef Study < hgsetget & dynamicprops
                 [self.window self.rect] = Screen('OpenWindow',...
                     self.screen,self.bgcolor);
             end
-            self.printfun('---------- ---------- ----------')
-            self.printfun('---------- / PPT GOOBLEDEGOOK ----------')
-            self.printfun('---------- ---------- ----------')
+            if ~self.quietppt
+                self.printfun('---------- ---------- ----------')
+                self.printfun('---------- / PPT GOOBLEDEGOOK ----------')
+                self.printfun('---------- ---------- ----------')
+            end
             % set default bgcolor
             %Screen(self.window,'FillRect',self.bgcolor);
             % screen center
