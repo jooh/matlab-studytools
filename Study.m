@@ -32,6 +32,8 @@ classdef Study < hgsetget & dynamicprops
         logfile = '';
         timestart = []; % First scan/GetSecs time stamp in run
         timecontrol = []; % SecondTiming or ScanTiming instance 
+        ET_serial = ''; % handle to eyetracking serial port object
+        eyetrack = 0;
     end
 
     properties (Abstract)
@@ -110,6 +112,17 @@ classdef Study < hgsetget & dynamicprops
                 % white on dark backgrounds
                 self.textpar.color = [255 255 255];
             end
+            if self.eyetrack
+                self.ET_serial = serial('COM1','BaudRate',9600,...
+                    'Databits',8);
+                fopen(self.ET_serial);
+                set(self.ET_serial,'timeout',.1);
+                wstate=warning('off',...
+                    'MATLAB:serial:fgetl:unsuccessfulRead');
+                fprintf(self.ET_serial,'ET_STP');
+                fprintf(self.ET_serial,'ET_CLR');
+                fprintf(self.ET_serial,'ET_REC');
+            end
             % open window
             self.printfun('---------- ---------- ----------')
             self.printfun('---------- PPT GOOBLEDEGOOK ----------')
@@ -156,6 +169,14 @@ classdef Study < hgsetget & dynamicprops
             % for some reason Screen('Close',self.window) doesn't work
             self.printfun('closewindow')
             Screen('CloseAll');
+            if self.eyetrack
+                fprintf(self.ET_serial,'ET_STP');
+                outfile = sprintf('D:\\StudyData_%s.idf',...
+                    datestr(now,'yyyymmdd_HHMM_SS')); 
+                fprintf(self.ET_serial,'ET_SAV "%s"',outfile);
+                fclose(self.ET_serial);
+                warning(wstate.state,wstate.identifier);
+            end
         end
 
         function runtrials(self,trialorder)
@@ -177,6 +198,8 @@ classdef Study < hgsetget & dynamicprops
             % start second / scan timer (maybe count dummies)
             self.timestart = self.timecontrol.begin;
             for t = 1:ntrials
+                fprintf(self.ET_serial,sprintf('ET_REM %s.png',...
+                    self.trials(t).condition.name));
                 self.trials(t).condition.call;
                 % update the central trial log with the new result from
                 % the condition instance

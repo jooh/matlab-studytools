@@ -5,14 +5,13 @@
 % calibration failures are catastrophic for your experiment, you will
 % need to check the output flag for success==1 in your own script.
 % Syntax:
-% success = calibrateEyeTracker(window,[ET_serial],[ET_params])
-% Inputs (all optional except the Psychtoolbox window):
+% [success,points] = calibrateEyeTracker(window,[ET_serial],[varargin])
+% 
+% INPUTS:
 % window - Psychtoolbox screen handle
-% ET_serial - Opened serial port object for scanner. Initialise with e.g.
-% 		ET_serial = serial('COM1','BaudRate',9600,'Databits',8);
-%   	fopen(ET_serial);
-% 		If left undefined, we open a serial port with the above settings.
-% ET_params - struct with eye tracking parameters. All are optional.
+% ET_serial - Opened serial port object
+%
+% Named varargins (all optional):
 % 	npoints - (13) number of calibration points
 % 	calibarea - ([screenx screeny]) calibration area on screen
 % 	bgcolour - ([128 128 128]) background colour (RGB)
@@ -28,45 +27,24 @@
 %       2 for every-day use. Drop if subject is problematic.
 % 13/4/2010 J Carlin, heavily indebted to Maarten van Caasteren's
 % VB script for E-Prime
+% 31/8/2012 update - refactored with better arguments through varargin
 
-% TODO
-% Drift correction
-% ET_SAV - no problem!
-
-function [ready,points] = calibrateEyeTracker(window,ET_serial,ET_params)
+function [ready,points] = calibrateEyeTracker(window,ET_serial,varargin)
 
 % If no serial object entered, try to set one up
-if ~exist('ET_serial','var') || isempty(ET_serial)
-    ET_serial = serial('COM1','BaudRate',9600,'Databits',8);
-    fopen(ET_serial);
-end
-
-% By default, calls time out in 10 SECONDS.
-% This is clearly unacceptably slow for our
-% purposes. Now 50 ms.
-set(ET_serial,'timeout',.1);
-% The downside is that Matlab spits out a lot of
-% warnings. Let's disable these...
-wstate=warning('off','MATLAB:serial:fgetl:unsuccessfulRead');
-
-
-
-
-% If you don't know what you want, we will fill this in with
-% defaults.
-if ~exist('ET_params','var')
-	ET_params = struct;
-end
+%if ieNotDefined('ET_serial')
+    %ET_serial = serial('COM1','BaudRate',9600,'Databits',8);
+    %fopen(ET_serial);
+%end
 
 % Screen settings
 sc = Screen('Resolution',window);
 schw = [sc.width sc.height];
-
 KbName('UnifyKeyNames');
 
 % These are the default settings
-default_params = struct(...
-	'npoints',13,...
+getArgs(varargin,...
+	{'npoints',13,...
 	'calibarea',schw,... % Full screen size
 	'bgcolour',[128 128 128],...
 	'targcolour',[255 255 255],...
@@ -76,25 +54,15 @@ default_params = struct(...
     'waitforvalid',1,...
     'randompointorder',0,...
     'autoaccept',1,...
-    'checklevel',2 ...
-	);
-
-% Now put in defaults for whatever was left undefined
-fns = fieldnames(default_params);
-for fn = fns'
-	if ~isfield(ET_params,fn{1})
-		ET_params.(fn{1}) = default_params.(fn{1});
-	end
-end
+    'checklevel',2});
 
 % Quick sanity check
-if ~sum(ET_params.npoints == [2,5,9,13])
-    error('SMI eye trackers only support 2,5,9 or 13 point calibration')
-end
+assert(any(npoints==[2,5,9,13]),...
+    'SMI eye trackers only support 2,5,9 or 13 point calibration')
 
 % Start and stop calibration once. This somehow
 % solves a lot of problems
-fprintf(ET_serial,sprintf('ET_CAL %d',ET_params.npoints));
+fprintf(ET_serial,sprintf('ET_CAL %d',npoints));
 fprintf(ET_serial,'ET_BRK');
 % Wait for various crap to go through
 w = 0;
@@ -105,11 +73,11 @@ while w == 0
 end
 
 % Draw background
-Screen(window,'FillRect',ET_params.bgcolour);
+Screen(window,'FillRect',bgcolour);
 
 % Display settings for targets
 % Make a cross - studiously avoiding alpha blending here to
-% maximise compatibility (but you will need to im processing toolbox)
+% maximise compatibility (but you will need im processing toolbox)
 % Settings
 cross_orgsize = 100;
 cross_linewidth = .05;
@@ -120,13 +88,13 @@ cr = zeros(cross_orgsize);
 cr(:,cs:ce) = 1;
 cr(cs:ce,:) = 1;
 % Resize - Since square, no point to bicubic interpolation
-cr_rs = imresize(cr,[ET_params.targsize ET_params.targsize],'nearest');
+cr_rs = imresize(cr,[targsize targsize],'nearest');
 % Make target uint8, colour
-rgb_t = ET_params.targcolour;
+rgb_t = targcolour;
 cros = uint8(cat(3,cr_rs*rgb_t(1),cr_rs*rgb_t(2),cr_rs*rgb_t(3)));
 % Make an appropriately-coloured background
-rgb = ET_params.bgcolour;
-bg = uint8(ones(ET_params.targsize));
+rgb = bgcolour;
+bg = uint8(ones(targsize));
 bg_rgb =cat(3,bg*rgb(1),bg*rgb(2),bg*rgb(3));
 % Put background and target together
 target = bg_rgb;
@@ -137,10 +105,10 @@ targetbuf = Screen('MakeTexture',window,target);
 targetrect = [0 0 size(target,1) size(target,2)];
 
 % Various calibration settings
-fprintf(ET_serial,sprintf('ET_CPA %d %d',0,ET_params.waitforvalid));
-fprintf(ET_serial,sprintf('ET_CPA %d %d',1,ET_params.randompointorder));
-fprintf(ET_serial,sprintf('ET_CPA %d %d',2,ET_params.autoaccept));
-fprintf(ET_serial,sprintf('ET_LEV %d',ET_params.checklevel));
+fprintf(ET_serial,sprintf('ET_CPA %d %d',0,waitforvalid));
+fprintf(ET_serial,sprintf('ET_CPA %d %d',1,randompointorder));
+fprintf(ET_serial,sprintf('ET_CPA %d %d',2,autoaccept));
+fprintf(ET_serial,sprintf('ET_LEV %d',checklevel));
 
 % Set calibration area (ie screen res)
 fprintf(ET_serial,sprintf('ET_CSZ %d %d',schw(1),schw(2)));
@@ -162,19 +130,19 @@ standardpoints = [640 512;
     928 743];
 
 % Scale up/down to match calibration area
-scaledpoints = standardpoints .* repmat(ET_params.calibarea ...
+scaledpoints = standardpoints .* repmat(calibarea ...
     ./ [1280 1024],13,1);
 
 % If the calibration area doesn't match the screen res,
 % need to shift everything to centre
-shift = @(xy) round(xy + ([sc.width sc.height]/2) - (ET_params.calibarea/2));
+%shift = @(xy) round(xy + ([sc.width sc.height]/2) - (calibarea/2));
 
 % Shift the calibration points to centre on the screen
 shiftedpoints = round(scaledpoints + repmat(schw/2,13,1) ...
-    - repmat(ET_params.calibarea/2,13,1));
+    - repmat(calibarea/2,13,1));
 
 % Set to appropriate npoints
-shiftedpoints = shiftedpoints(1:ET_params.npoints,:);
+shiftedpoints = shiftedpoints(1:npoints,:);
 
 % Send custom points to eye tracker
 for p = 1:length(shiftedpoints)
@@ -182,13 +150,13 @@ for p = 1:length(shiftedpoints)
         shiftedpoints(p,1),shiftedpoints(p,2)));
 end
 % Start calibration
-fprintf(ET_serial,sprintf('ET_CAL %d',ET_params.npoints));
+fprintf(ET_serial,sprintf('ET_CAL %d',npoints));
 
 ready = 0;
 ntries = 0;
 
 % Point coordinates go here - just to validate
-points = zeros(ET_params.npoints,2);
+points = zeros(npoints,2);
 
 rc = 0;
 while ~ready
@@ -206,16 +174,15 @@ while ~ready
 		k = find(keyCode);
 		k = k(1);
 		% Force acceptance of current point
-		if k == ET_params.acceptkey
+		if k == acceptkey
 			fprintf('Accepting point...\n')
-            %WaitSecs(.2); % Time to let go of key...
             % Now stop execution until the key is released
             while KbCheck
                 WaitSecs(.01);
             end
             fprintf(ET_serial,'ET_ACC');
 		% Give up on calibration
-		elseif k == ET_params.quitkey
+		elseif k == quitkey
 			fprintf('Calibration attempt aborted!\n')
 			fprintf(ET_serial,'ET_BRK');
 			break
@@ -236,61 +203,38 @@ while ~ready
 
 		%%% What we do next depends on the command we got:
 		% Calibration point change
-        if strcmp(command,'ET_CHG')
-            % Coordinates for point
-            xy = points(str2num(command_etc{2}),:);
-			% Rect for point
-			pointrect = CenterRectOnPoint(targetrect,xy(1),xy(2));
-			% Draw into rect
-			Screen('DrawTexture',window,targetbuf,[],pointrect);
-            Screen(window,'Flip');
-            % Reset timeout counter
-            ntries = 0;
-
-            % Calibation point definition
-        elseif strcmp(command,'ET_PNT')
-            points(str2num(command_etc{2}),:) = ...
-				[str2num(command_etc{3}) str2num(command_etc{4})];
-
-		% Screen size verification
-		%elseif strcmp(command,'ET_CSZ')
-		% Actually, we don't want calibration area
-			% to match screen size.
-			% So arguments are X and Y size
-			%sc = Screen('Resolution',window);
-			%if str2num(command_etc{2}) ~= sc.width
-				%fprintf('Calibration failed - Screen width mismatch\n')
-				%break
-			%elseif str2num(command_etc{3}) ~= sc.height
-				%fprintf('Calibration failed - Screen height mismatch\n')
-				%break
-			%end
-
-		% Calibration finished
-		elseif strcmp(command,'ET_FIN')
-			ready = 1;
-        
-        % Various commands we don't care about
-        elseif strcmp(command,'ET_REC') || ...
-                strcmp(command,'ET_CLR') || ...
-                strcmp(command,'ET_CAL') || ...
-                strcmp(command,'ET_CSZ') || ...
-                strcmp(command,'ET_ACC') || ...
-                strcmp(command,'ET_CPA') || ...
-                strcmp(command,'ET_LEV')
-            continue
-
-		% Catch all
-		else
-			fprintf(sprintf(['Calibration failed - received unrecognised '...
-				'input: %s\n'],response));
-            fprintf(ET_serial,'ET_BRK');
-			break % DEBUG
+        switch command
+            case 'ET_CHG'
+                % Coordinates for point
+                xy = points(str2num(command_etc{2}),:);
+                % Rect for point
+                pointrect = CenterRectOnPoint(targetrect,xy(1),xy(2));
+                % Draw into rect
+                Screen('DrawTexture',window,targetbuf,[],pointrect);
+                Screen(window,'Flip');
+                % Reset timeout counter
+                ntries = 0;
+            case 'ET_PNT'
+                % Calibation point definition
+                points(str2num(command_etc{2}),:) = ...
+                    [str2num(command_etc{3}) str2num(command_etc{4})];
+            case 'ET_FIN'
+                % Calibration finished
+                ready = 1;
+            case {'ET_REC','ET_CLR','ET_CAL','ET_CSZ','ET_ACC','ET_CPA',...
+                    'ET_LEV'}
+                % Various commands we don't care about
+                continue
+            otherwise
+                % Catch all
+                fprintf(...
+                    'Calibration failed. Unrecognised input: %s\n',...
+                    response);
+                fprintf(ET_serial,'ET_BRK');
+                break % DEBUG
 		end % Resp interpretation
 	end % Resp check
 end % While
 
 % Clear the target texture from memory
 Screen('Close',targetbuf);
-% Return warning state to whatever it started as
-warning(wstate.state,wstate.identifier);

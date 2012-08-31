@@ -9,11 +9,12 @@
 % binocular. As near as I can tell, this information is never transmitted,
 % so little can be done at this end.
 % Syntax:
-% [success,RMSdev,RMSdevdist,MeanDevXY] = validateCalibration(window,ET_serial,ET_params)
-% Inputs (all params are optional):
+% [success,RMSdev,RMSdevdist,MeanDevXY] = validateCalibration(window,ET_serial,varargin)
+% Inputs:
 % window - Psychtoolbox screen handle
 % ET_serial - Opened serial port object for scanner.
-% ET_params - struct with eye tracking parameters. All are optional.
+%
+% Named, optional inputs:
 %   npoints - (13) calibration points. DO NOT change between calib and
 %       validation.
 % 	bgcolour - ([128 128 128]) background colour (RGB)
@@ -23,26 +24,7 @@
 % 	quitkey - ([escapekey]) key for aborting calibration
 % 		Use KbName('UnifyKeyNames') to get names for other keys
 % 13/4/2010 J Carlin
-function [ready,RMSdev, RMSdevdist, MeanDevXY] = validateCalibration(window,ET_serial,ET_params)
-
-% If no serial object entered, crash out
-if ~exist('ET_serial','var') || isempty(ET_serial)
-    error('ET_serial must be defined! See calibrateEyeTracker')
-end
-
-% By default, calls time out in 10 SECONDS.
-% This is clearly unacceptably slow for our
-% purposes. Now 100 ms.
-set(ET_serial,'timeout',.1);
-% The downside is that Matlab spits out a lot of
-% warnings. Let's disable these...
-wstate=warning('off','MATLAB:serial:fgetl:unsuccessfulRead');
-
-% If you don't know what you want, we will fill this in with
-% defaults.
-if ~exist('ET_params','var')
-	ET_params = struct;
-end
+function [ready,RMSdev, RMSdevdist, MeanDevXY] = validateCalibration(window,ET_serial,varargin)
 
 % Screen settings
 sc = Screen('Resolution',window);
@@ -50,26 +32,24 @@ schw = [sc.width sc.height];
 
 KbName('UnifyKeyNames');
 
-% These are the default settings
-default_params = struct(...
+% These are the default settings - some of these are unused but convenient
+% to have same as in calibrateEyeTracker so the same args can be passed to
+% each
+getArgs(varargin,...
+	{'npoints',13,...
+	'calibarea',schw,... % Full screen size
 	'bgcolour',[128 128 128],...
 	'targcolour',[255 255 255],...
 	'targsize',20, ...
-	'npoints',13, ...
 	'acceptkey',KbName('space'), ...
-	'quitkey',KbName('escape') ...
-	);
-
-% Now put in defaults for whatever was left undefined
-fns = fieldnames(default_params);
-for fn = fns'
-	if ~isfield(ET_params,fn{1})
-		ET_params.(fn{1}) = default_params.(fn{1});
-	end
-end
+	'quitkey',KbName('escape'), ...
+    'waitforvalid',1,...
+    'randompointorder',0,...
+    'autoaccept',1,...
+    'checklevel',2});
 
 % Draw background
-Screen(window,'FillRect',ET_params.bgcolour);
+Screen(window,'FillRect',bgcolour);
 
 % Display settings for targets
 % Make a cross - studiously avoiding alpha blending here to
@@ -84,13 +64,13 @@ cr = zeros(cross_orgsize);
 cr(:,cs:ce) = 1;
 cr(cs:ce,:) = 1;
 % Resize - Since square, no point to bicubic interpolation
-cr_rs = imresize(cr,[ET_params.targsize ET_params.targsize],'nearest');
+cr_rs = imresize(cr,[targsize targsize],'nearest');
 % Make target uint8, colour
-rgb_t = ET_params.targcolour;
+rgb_t = targcolour;
 cros = uint8(cat(3,cr_rs*rgb_t(1),cr_rs*rgb_t(2),cr_rs*rgb_t(3)));
 % Make an appropriately-coloured background
-rgb = ET_params.bgcolour;
-bg = uint8(ones(ET_params.targsize));
+rgb = bgcolour;
+bg = uint8(ones(targsize));
 bg_rgb =cat(3,bg*rgb(1),bg*rgb(2),bg*rgb(3));
 % Put background and target together
 target = bg_rgb;
@@ -105,7 +85,7 @@ fprintf(ET_serial,sprintf('ET_VLS'));
 ready = 0;
 readyonce = 0; % Extra check to catch second eye in bino mode
 ntries = 0;
-points = zeros(ET_params.npoints,2);
+points = zeros(npoints,2);
 
 % Initialise output vars for graceful errors
 RMSdev = [];
@@ -128,7 +108,7 @@ while ~ready
 		k = find(keyCode);
 		k = k(1);
 		% Force acceptance of current point
-		if k == ET_params.acceptkey
+		if k == acceptkey
 			fprintf('Accepting point...\n')
             %WaitSecs(.2); % Time to let go of key...
             % Now stop execution until the key is released
@@ -137,7 +117,7 @@ while ~ready
             end
             fprintf(ET_serial,'ET_ACC');
 		% Give up on calibration
-		elseif k == ET_params.quitkey
+		elseif k == quitkey
 			fprintf('Calibration attempt aborted!\n')
 			fprintf(ET_serial,'ET_BRK');
 			break
@@ -180,20 +160,6 @@ while ~ready
             points(str2num(command_etc{2}),:) = ...
 				[str2num(command_etc{3}) str2num(command_etc{4})];
 
-		% Screen size verification
-		%elseif strcmp(command,'ET_CSZ')
-		% Actually, we don't want calibration area
-			% to match screen size.
-			% So arguments are X and Y size
-			%sc = Screen('Resolution',window);
-			%if str2num(command_etc{2}) ~= sc.width
-				%fprintf('Calibration failed - Screen width mismatch\n')
-				%break
-			%elseif str2num(command_etc{3}) ~= sc.height
-				%fprintf('Calibration failed - Screen height mismatch\n')
-				%break
-			%end
-       
         % Validation finished
         % The twist here is that ET_VLS returns twice if
         % in binocular mode... So need to go through a last
@@ -241,5 +207,3 @@ end % While
 
 % Clear the target texture from memory
 Screen('Close',targetbuf);
-% Return warning state to whatever it started as
-warning(wstate.state,wstate.identifier);
