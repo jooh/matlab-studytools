@@ -13,7 +13,6 @@ classdef Study < hgsetget & dynamicprops
         buttonboxkeys = [28 26 24 22];
         validkeys = [];
         location = 'pc';
-        TR = [];
         scanobj = ScanObjNull;
         resolution = [1024 768];
         oldresolution = struct;
@@ -86,7 +85,6 @@ classdef Study < hgsetget & dynamicprops
                     self.scanobj = actxserver('MRISync.ScannerSync');
                     err = invoke(self.scanobj,'Initialize','');
                     assert(~err,'Keithley error')
-                    assert(isnumeric(self.TR),'must set TR for scanner sync!')
                     invoke(self.scanobj,'SetTimeout',double(200000)); % 200
                     invoke(self.scanobj,'SetMSPerSample',2);
                     self.printfun('running in scanner mode');

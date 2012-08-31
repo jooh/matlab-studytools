@@ -15,6 +15,8 @@ classdef ScanPreCondition < Condition
     % timecontrol.begin.
     properties
         roughtiming = SecondTiming; % used to track events before scan
+        dobegin = 1;
+        starton = 0;
     end
 
     methods
@@ -75,10 +77,11 @@ classdef ScanPreCondition < Condition
                 end
             end
             % ok, all events done - time for scanner sync
-            self.timecontrol.begin;
-            fprintf('BEGAN\n')
+            if self.dobegin
+                self.timecontrol.begin;
+            end
+            self.timecontrol.waituntil(self.starton);
             self.result(self.ncalls).endtime = self.timecontrol.check;
-            fprintf('CHECKED\n')
         end
     end
 end

@@ -2,7 +2,6 @@ classdef ScanTiming < Timing
     % Timing object for running events relative to scans from scannersync
     properties
         tr = [];
-        ndummies = 3;
     end
 
     methods
@@ -20,8 +19,6 @@ classdef ScanTiming < Timing
 
         function scan = begin(self)
             invoke(self.scanobj,'StartExperiment',self.tr);
-            % run through dummies
-            self.waituntil(max([0 self.ndummies-1]));
             % figure out tr
             oldtr = self.tr;
             % should now have an ok idea of what the actual tr is
@@ -30,9 +27,6 @@ classdef ScanTiming < Timing
                 'tr diverges by more than 200 ms from tr estimate');
             % set first scan as whatever we've got at this point
             [self.first,scan] = deal(self.check);
-            % quick debug - if this is not true I have misunderstood
-            % something about scannersync
-            assert(self.first == self.ndummies,'missed a dummy?');
         end
 
         function tim = check(self)
