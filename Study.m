@@ -35,6 +35,7 @@ classdef Study < hgsetget & dynamicprops
         timecontrol = []; % SecondTiming or ScanTiming instance 
         ET_serial = ''; % handle to eyetracking serial port object
         eyetrack = 0;
+        rundur = []; % estimated run duration from initialisetrials
     end
 
     properties (Abstract)
@@ -58,12 +59,11 @@ classdef Study < hgsetget & dynamicprops
                 self.windowed = 1;
             end
             if self.verbose
-                self.printfun = @(x) fprintf([x '\n']);
+                self.printfun = @display; %(x) fprintf([x '\n']);
             else
                 self.printfun = @(x)x;
             end
             self.printfun('openwindow')
-
             if isempty(self.logfile)
                 self.logfile = fullfile(tempdir,sprintf('study_%s.txt',...
                     datestr(now,'yyyy_mm_dd_HHMM')));
@@ -86,10 +86,6 @@ classdef Study < hgsetget & dynamicprops
                     self.screenwidth = 268;
                     self.validkeys = self.buttonboxkeys;
                     self.scanobj = actxserver('MRISync.ScannerSync');
-                    err = invoke(self.scanobj,'Initialize','');
-                    assert(~err,'Keithley error')
-                    invoke(self.scanobj,'SetTimeout',double(200000)); % 200
-                    invoke(self.scanobj,'SetMSPerSample',2);
                     self.printfun('running in scanner mode');
                 otherwise
                     error('unrecognised location: %s',self.location)
@@ -188,20 +184,23 @@ classdef Study < hgsetget & dynamicprops
 
         function runtrials(self,trialorder)
             self.printfun('runtrials')
+            % need to reinit since this gets destroyed easily
+            self.initialisescanobj;
             if ~isempty(self.trials)
                 self.printfun('existing trials will be discarded')
             end
             ntrials = length(trialorder);
             self.printfun(sprintf('running %d trials',ntrials));
             self.initialisetrials(trialorder);
-            self.printfun(['logfile: ' self.logfile]);
+            self.printfun(sprintf('logfile: %s',self.logfile));
             diary(self.logfile);
-            self.printfun('TRIAL\t TIME\t CYCLE\t CONDITION\t RESPONSE\t');
             % run precon - instructions, calibration, wait trigger etc
             if ~isempty(self.precondition)
                 self.printfun('running precondition')
                 self.precondition.call;
             end
+            self.printfun(sprintf(...
+                'TRIAL\t\tTIME\t\tCYCLE\t\tCONDITION\t\tRESPONSE\t\t'));
             % start second / scan timer (maybe count dummies)
             self.timestart = self.timecontrol.begin;
             for t = 1:ntrials
@@ -214,8 +213,9 @@ classdef Study < hgsetget & dynamicprops
                     self.trials(t).condition.result(...
                     self.trials(t).condition.ncalls));
                 self.scoretrial(t);
-                self.printfun(sprintf('%03d\t %04.3f\t %02.3f\t %s\t %s',...
-                    t, self.trials(t).time(1)-self.trials(1).time(1),...
+                self.printfun(sprintf(...
+                    '%04d\t %8.3f\t %8.3f\t %10s\t %10s',t,...
+                    self.trials(t).time(1)-self.trials(1).time(1),...
                     self.trials(t).time(1)-...
                     self.trials(max([t-1 1])).time(1),...
                     self.trials(t).condition.name,...
@@ -259,15 +259,23 @@ classdef Study < hgsetget & dynamicprops
             end
             % And finally, a global global result file for broad
             % descriptives across trials (computed by scoretrial)
-            self.initialisescore(trialorder)
+            self.initialisescore(trialorder);
+            self.rundur = self.trials(end).timing;
             t_end = self.trials(end).timing + ...
                 self.trials(end).condition.soa;
             if isinf(t_end) || isnan(t_end)
-                self.printfun('run duration estimate not possible')
+                self.printfun('run duration estimate not possible');
             else
-                self.printfun(sprintf('run duration: %.2f minutes',...
-                    t_end/60));
+                self.printfun(sprintf('run duration: %.2f %s',...
+                    t_end,self.timecontrol.units));
             end
+        end
+
+        function initialisescanobj(self)
+            err = invoke(self.scanobj,'Initialize','');
+            assert(~err,'Keithley error')
+            invoke(self.scanobj,'SetTimeout',30e3);
+            invoke(self.scanobj,'SetMSPerSample',2);
         end
     end
 

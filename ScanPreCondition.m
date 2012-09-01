@@ -80,7 +80,7 @@ classdef ScanPreCondition < Condition
             if self.dobegin
                 self.timecontrol.begin;
             end
-            self.timecontrol.waituntil(self.starton-1);
+            self.timecontrol.waituntil(self.starton);
             self.result(self.ncalls).endtime = self.timecontrol.check;
         end
     end

@@ -27,6 +27,7 @@ defs.stim.size = [];
 defs.studydir = studydir;
 defs.savedata = 1;
 defs.prefix = '';
+defs.eyetrack = 0;
 par = varargs2structfields(varargin,defs,defs.verbose);
 
 if par.debug
@@ -65,6 +66,13 @@ if madedir || ~exist(submat,'file')
     subdata = struct('par',{},'testtime',{},...
         'res',{},'notes',{});
 else
+    % loading existing Study instances can fail unless keynames have been
+    % unified first
+    try
+        KbName('UnifyKeyNames');
+    catch
+        printfun('no psychtoolbox?');
+    end
     subdata = loadbetter(submat);
     par.sessionI = length(subdata)+1;
     printfun(sprintf('running experiment session %d',par.sessionI));

@@ -18,7 +18,8 @@ classdef ScanTiming < Timing
         end
 
         function scan = begin(self)
-            invoke(self.scanobj,'StartExperiment',self.tr);
+            err = invoke(self.scanobj,'StartExperiment',self.tr);
+            assert(~err,'StartExperiment failed!');
             % figure out tr
             oldtr = self.tr;
             % should now have an ok idea of what the actual tr is
