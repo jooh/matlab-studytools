@@ -177,7 +177,9 @@ classdef Study < hgsetget & dynamicprops
                 outfile = sprintf('D:\\StudyData_%s.idf',...
                     datestr(now,'yyyymmdd_HHMM_SS')); 
                 fprintf(self.ET_serial,'ET_SAV "%s"',outfile);
-                fclose(self.ET_serial);
+                if ~isempty(self.ET_serial)
+                    fclose(self.ET_serial);
+                end
             end
         end
 
