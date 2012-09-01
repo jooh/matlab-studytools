@@ -114,7 +114,7 @@ classdef Study < hgsetget & dynamicprops
                 self.textpar.color = [255 255 255];
             end
             if self.eyetrack
-                self.ET_serial = serial('COM1','BaudRate',9600,...
+                self.ET_serial = serial('COM1','BaudRate',115200,...
                     'Databits',8);
                 fopen(self.ET_serial);
                 set(self.ET_serial,'timeout',.1);
@@ -182,7 +182,6 @@ classdef Study < hgsetget & dynamicprops
                     datestr(now,'yyyymmdd_HHMM_SS')); 
                 fprintf(self.ET_serial,'ET_SAV "%s"',outfile);
                 fclose(self.ET_serial);
-                warning(wstate.state,wstate.identifier);
             end
         end
 
