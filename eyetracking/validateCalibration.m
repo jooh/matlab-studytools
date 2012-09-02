@@ -18,7 +18,7 @@
 %   npoints - (13) calibration points. DO NOT change between calib and
 %       validation.
 % 	bgcolour - ([128 128 128]) background colour (RGB)
-% 	targcolour - ([255 255 255]) target colour (RGB)
+% 	targcolour - ([0 0 0]) target colour (RGB)
 % 	targsize - (20) target height/width in pixels
 % 	acceptkey - ([spacebar]) key for forcing point acceptance
 % 	quitkey - ([escapekey]) key for aborting calibration
@@ -39,7 +39,7 @@ getArgs(varargin,...
 	{'npoints',13,...
 	'calibarea',schw,... % Full screen size
 	'bgcolour',[128 128 128],...
-	'targcolour',[255 255 255],...
+	'targcolour',[0 0 0],...
 	'targsize',20, ...
 	'acceptkey',KbName('space'), ...
 	'quitkey',KbName('escape'), ...
@@ -50,35 +50,6 @@ getArgs(varargin,...
 
 % Draw background
 Screen(window,'FillRect',bgcolour);
-
-% Display settings for targets
-% Make a cross - studiously avoiding alpha blending here to
-% maximise compatibility (but you will need to im processing toolbox)
-% Settings
-cross_orgsize = 100;
-cross_linewidth = .05;
-% Build cross
-cs = round((cross_orgsize / 2) - (cross_orgsize * cross_linewidth));
-ce = round((cross_orgsize / 2) + (cross_orgsize * cross_linewidth));
-cr = zeros(cross_orgsize);
-cr(:,cs:ce) = 1;
-cr(cs:ce,:) = 1;
-% Resize - Since square, no point to bicubic interpolation
-cr_rs = imresize(cr,[targsize targsize],'nearest');
-% Make target uint8, colour
-rgb_t = targcolour;
-cros = uint8(cat(3,cr_rs*rgb_t(1),cr_rs*rgb_t(2),cr_rs*rgb_t(3)));
-% Make an appropriately-coloured background
-rgb = bgcolour;
-bg = uint8(ones(targsize));
-bg_rgb =cat(3,bg*rgb(1),bg*rgb(2),bg*rgb(3));
-% Put background and target together
-target = bg_rgb;
-target(find(cros)) = cros(find(cros));
-% Draw texture
-targetbuf = Screen('MakeTexture',window,target);
-% Set up basic rect
-targetrect = [0 0 size(target,1) size(target,2)];
 
 % Start validation
 fprintf(ET_serial,sprintf('ET_VLS'));
@@ -146,11 +117,8 @@ while ~ready
 		% Calibration point change
         if strcmp(command,'ET_CHG')
             % Coordinates for point
-            xy = points(str2num(command_etc{2}),:);
-			% Rect for point
-			pointrect = CenterRectOnPoint(targetrect,xy(1),xy(2));
-			% Draw into rect
-			Screen('DrawTexture',window,targetbuf,[],pointrect);
+            xy = points(str2num(command_etc{2}),:)';
+            Screen('DrawDots',window,xy,5,targcolour);
             Screen(window,'Flip');
             % Reset timeout counter
             ntries = 0;
@@ -204,6 +172,3 @@ while ~ready
 		end % Resp interpretation
 	end % Resp check
 end % While
-
-% Clear the target texture from memory
-Screen('Close',targetbuf);
