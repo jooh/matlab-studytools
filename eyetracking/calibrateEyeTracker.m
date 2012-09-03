@@ -123,7 +123,6 @@ ntries = 0;
 
 % Point coordinates go here - just to validate
 points = zeros(npoints,2);
-keyboard;
 
 rc = 0;
 while ~ready

@@ -176,7 +176,7 @@ classdef Study < hgsetget & dynamicprops
                 fprintf(self.ET_serial,'ET_STP');
                 outfile = sprintf('D:\\StudyData_%s.idf',...
                     datestr(now,'yyyymmdd_HHMM_SS')); 
-                fprintf(self.ET_serial,'ET_SAV "%s"',outfile);
+                fprintf(self.ET_serial,['ET_SAV "' outfile '"']);
                 if ~isempty(self.ET_serial)
                     fclose(self.ET_serial);
                 end
@@ -277,6 +277,25 @@ classdef Study < hgsetget & dynamicprops
             assert(~err,'Keithley error');
             invoke(self.scanobj,'SetTimeout',30e3);
             invoke(self.scanobj,'SetMSPerSample',2);
+        end
+
+        function res = exportstatic(self)
+            % export data in static struct form
+            res = get(self);
+            res.conditions = get(res.conditions);
+            for t = 1:length(res.trials)
+                res.trials(t).condition = get(res.trials(t).condition);
+                res.trials(t).condition.studyfield = [];
+                res.trials(t).condition.result = [];
+                res.trials(t).condition.timecontrol = [];
+            end
+            if ~isempty(res.precondition)
+                res.precondition = get(res.precondition);
+            end
+            if ~isempty(res.postcondition)
+                res.postcondition = get(res.postcondition);
+            end
+            res.timecontrol = get(res.timecontrol);
         end
     end
 

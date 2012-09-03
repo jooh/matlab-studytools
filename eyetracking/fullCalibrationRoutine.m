@@ -35,6 +35,8 @@ DrawFormattedText(window,['Follow the target as it moves around '...
     vspacing);
 Screen(window,'Flip');
 waitResp(acceptkey,quitkey);
+% to release key
+WaitSecs(.2);
 ready = 0;
 while ~ready
 	success = calibrateEyeTracker(window,ET_serial,varargin{:});

@@ -6,7 +6,7 @@
 classdef ScanObjNull
     methods
         function s = ScanObjNull;
-            fprintf('WARNING: null scanobj - NO SCANNER SYNC\n')
+            %fprintf('WARNING: null scanobj - NO SCANNER SYNC\n')
         end
 
         function varargout = invoke(self,varargin);
