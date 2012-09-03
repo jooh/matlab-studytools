@@ -15,5 +15,5 @@ if exist(outmat,'file')
     assert(success==1,'backup move failed!');
     fprintf('(savesubdata) renamed old subdata as %s\n',outmat_backup)
 end
-save(outmat,'subdata');
+save(outmat,'subdata','-v7.3');
 fprintf('(savesubdata) saved subdata as %s\n',outmat)

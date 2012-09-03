@@ -15,6 +15,8 @@ classdef ScanObjNull
                     WaitSecs(varargin{2}/1000);
                 case 'GetResponse'
                     varargout{1} = 0;
+                case 'Initialize'
+                    varargout{1} = 0;
             end
         end
     end

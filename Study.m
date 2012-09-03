@@ -274,7 +274,7 @@ classdef Study < hgsetget & dynamicprops
 
         function initialisescanobj(self)
             err = invoke(self.scanobj,'Initialize','');
-            assert(~err,'Keithley error')
+            assert(~err,'Keithley error');
             invoke(self.scanobj,'SetTimeout',30e3);
             invoke(self.scanobj,'SetMSPerSample',2);
         end
