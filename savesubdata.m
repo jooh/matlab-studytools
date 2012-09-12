@@ -16,5 +16,5 @@ if exist(outmat,'file')
     fprintf('(savesubdata) renamed old subdata as %s\n',outmat_backup)
 end
 fprintf('(savesubdata) saving subdata as %s\n',outmat)
-% now v6 for faster read/write
-save(outmat,'subdata','-v6');
+% now v7 for faster read/write
+save(outmat,'subdata','-v7');
