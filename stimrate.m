@@ -1,14 +1,18 @@
 % Present images or videos in a figure window and ask subject to rate each
 % stimulus by key presses.
-% res = imagerate(stimstruct,itemstruct,options)
-function res = stimrate(stimstruct,items,options)
+% res = stimrate(stimstruct,itemstruct,options)
+function res = stimrate(stimstruct,items,varargin)
+
+getArgs(varargin,{'bgcolor',[128 128 128],'stimsize',7,'nreps',1,...
+    'windowed',0,'verbose',0,'target','image','framerate',0,'noptions',5});
 
 nitems = length(items);
 nstim = length(stimstruct);
-ntrials = nitems*nstim*options.nrepeats;
+ntrials = nitems * nstim * nrepeats;
 
-stimorder = repmat(1:nstim,[1 nitems*options.nrepeats]);
-itemorder = repmat(1:nitems,[1 nstim*options.nrepeats]);
+% work out random stim/item order
+stimorder = repmat(1:nstim,[1 nitems*nrepeats]);
+itemorder = repmat(1:nitems,[1 nstim*nrepeats]);
 randind = randperm(ntrials);
 
 res.response = NaN([1 ntrials]);
@@ -18,15 +22,26 @@ res.itemcat = NaN([1 ntrials]);
 res.stimorder = stimorder(randind);
 res.itemorder = itemorder(randind);
 
+% Setup basic study
+st = RatingStudy('conditionname','construct','noptions=5');
+
+try
+    st.openwindow;
+    st.timecontrol = SecondTiming('scanobj',st.scanobj);
+    printfun('configuring events');
+
+
+
 % Make a fullscreen figure and put the stimulus in the middle 3rd of screen.
 F = figure('units','normalized','defaultaxesfontsize',12,...
     'menubar','none','numbertitle','off','position',[0 0 1 1],...
-    'color',options.bgcolor);
+    'color',bgcolor);
+% NB, no control over display size at present. Could use axis instead.
 ax = subplot(3,3,5);
 
-validkeys = 1:options.noptions;
+validkeys = 1:noptions;
 
-if options.dovideo
+if framerate > 0
     stimfun = @showvid;
 else
     stimfun = @showim;
