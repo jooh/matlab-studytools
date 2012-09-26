@@ -25,6 +25,7 @@ switch lower(location)
 		% the screen is 1, but if single display, the screen
 		% is 0.
 		screens = Screen('Screens');
+        assert(~isempty(screens),'no available psychtoolbox screens')
 		conf.whichScreen=screens(ceil(length(screens)/2));
 
 		conf.ScanObj = NaN; % Dummy variable

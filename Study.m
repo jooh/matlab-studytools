@@ -78,7 +78,7 @@ classdef Study < hgsetget & dynamicprops
                     self.totdist = '500';
                     self.screenwidth = '380';
                     % assume you've entered a cell array of keys
-                    self.validkeys = self.keyboardkeys
+                    self.validkeys = self.keyboardkeys;
                     self.printfun('running in PC mode');
                 case 'mri'
                     self.screen = 0;

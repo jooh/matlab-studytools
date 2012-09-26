@@ -5,9 +5,8 @@ classdef TextEvent < StudyEvent
         x = [];
         y = [];
         color = [];
-        rect = []; % Psychtoolbox rect
         window = []; % window handle
-        name = 'fixation';
+        name = 'text';
         txtwrap = [];
         vspacing = [];
     end

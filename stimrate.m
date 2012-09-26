@@ -3,12 +3,22 @@
 % res = stimrate(stimstruct,itemstruct,options)
 function res = stimrate(stimstruct,items,varargin)
 
+global printfun
+
+if isempty(printfun)
+    printfun = @disp;
+end
+
 getArgs(varargin,{'bgcolor',[128 128 128],'stimsize',7,'nreps',1,...
-    'windowed',0,'verbose',0,'target','image','framerate',0,'noptions',5});
+    'windowed',0,'verbose',0,'target','image','framerate',24,...
+    'respkeys',{'1','2','3','4','5'},'rewind',1,'itidur',1});
 
 nitems = length(items);
 nstim = length(stimstruct);
 ntrials = nitems * nstim * nrepeats;
+noptions = length(respkeys);
+
+frametime = 1/framerate;
 
 % work out random stim/item order
 stimorder = repmat(1:nstim,[1 nitems*nrepeats]);
@@ -22,29 +32,70 @@ res.itemcat = NaN([1 ntrials]);
 res.stimorder = stimorder(randind);
 res.itemorder = itemorder(randind);
 
+orgsize = size(stimstruct(1).(target));
+ar = orgsize(1) / orgsize(2);
+% will be 1 for images
+nframes = size(stimstruct(1).(target),4);
+
 % Setup basic study
-st = RatingStudy('conditionname','construct','noptions=5');
+% NB, construct is a property we need to add to each condition
+st = RatingTask('conditionname','construct','keyboardkeys',respkeys);
 
 try
     st.openwindow;
     st.timecontrol = SecondTiming('scanobj',st.scanobj);
     printfun('configuring events');
-
-
-
-% Make a fullscreen figure and put the stimulus in the middle 3rd of screen.
-F = figure('units','normalized','defaultaxesfontsize',12,...
-    'menubar','none','numbertitle','off','position',[0 0 1 1],...
-    'color',bgcolor);
-% NB, no control over display size at present. Could use axis instead.
-ax = subplot(3,3,5);
-
-validkeys = 1:noptions;
-
-if framerate > 0
-    stimfun = @showvid;
-else
-    stimfun = @showim;
+    stimrect = [0 0 st.deg2px * [stimsize ar*stimsize]];
+    stimrect = CenterRectOnPoint(stimrect,st.xcenter,st.ycenter);
+    texty = st.ycenter + stdeg2px*stimsize/2;
+    % scrambled ISIs in random sequence with ntrials length
+    % (can just keep calling to get new, random scrambles)
+    ev.iti = VideoEvent(reshape([ss.stimulus.scramble],...
+        [asrow(size(ss.stimulus(1).scramble),2) ...
+            size(ss.stimulus(1).scramble,3) length(stimstruct)]),...
+        st, randpermrep(nstim,nitems*nreps),'alpha',stimstruct(1).alpha,...
+        'rect',stimrect);
+    % base events
+    ev.flip = FlipEvent(st);
+    ev.resp_on = KeyboardCheck('duration',frametime,...
+        'validkeys',st.validkeys);
+    % no response log
+    ev.resp_off = KeyboardCheck('duration',1,...
+        'validkeys',[]);
+    % text events
+    nc = 0;
+    offevents = {ev.iti,ev.flip,ev.resp_off};
+    for t = 1:nitems
+        ev.question(t) = TextEvent([items(t).question ...
+            sprintf('\n(%s = %s, %s = %s)',respkeys{1},...
+            items(t).label_low,respkeys{end},items(t).label_high)],...
+            st,'y',texty);
+        % stimuli
+        for s = 1:nstim
+            % NB, even if you wanted images we use the videoevent for
+            % flexibility
+            ev.stim(s) = VideoEvent(stimstruct(s).(target),...
+                'alpha',stimstruct(s).alpha,'rect',stimrect,...
+                'rewind',rewind);
+            % now conditions are every perm of stim / item
+            nc = nc+1;
+            onevents = repmat({ev.stim(s),ev.flip,ev.resp_on},...
+                [1 nframes]);
+            % must set duration==inf to force looping
+            st.conditions(nc) = Condition([offevents onevents],...
+                'name',sprintf('stim%02d_item%02d',s,t),...
+                'timecontrol',st.timecontrol,'duration',Inf);
+            % need to add custom prop for underlying construct
+            addprop(st.conditions(nc),'construct');
+            st.conditions(nc).construct = items(t).scoring;
+        end
+    end
+catch
+    e = lasterror;
+    st.closewindow;
+    printfun('CRASH - debug in e variable')
+    keyboard;
+    error('crashed')
 end
 
 for t = 1:ntrials

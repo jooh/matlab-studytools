@@ -27,6 +27,13 @@ classdef VideoEvent < StudyEvent
             s.nframe = size(vidframes,4);
             % do we need to make texture?
             if isempty(s.tex)
+                % add singleton dims if necessary (e.g. image rather than
+                % vid)
+                nd = ndims(vidframes);
+                if nd < 4
+                    vidframes = reshape(vidframes,...
+                        [size(vidframes) ones(1,4-nd)]);
+                end
                 s.tex = NaN([1 s.nframe]);
                 for f = 1:s.nframe
                     s.tex(f) = Screen('MakeTexture',s.window,...

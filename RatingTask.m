@@ -51,6 +51,7 @@ classdef RatingTask < Study
             firstind = find(correctkey,1,'first');
             % set trial score
             rt = rts(firstind);
+            % TODO: SCORE - 1 / -1 etc
             respkey = respkeys(firstind);
             self.trials(t).score.rt = rt;
             self.trials(t).score.respk = respkey;
