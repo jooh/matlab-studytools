@@ -56,6 +56,13 @@ try
     % text events
     nc = 0;
     offevents = {ev.iti,ev.flip,ev.resp_off};
+    for s = 1:nstim
+        % NB, even if you wanted images we use the videoevent for
+        % flexibility
+        ev.stim(s) = VideoEvent(stimstruct(s).(target),st,...
+            'alpha',stimstruct(s).alpha,'rect',stimrect,...
+            'rewind',rewind);
+    end
     for t = 1:nitems
         ev.question(t) = TextEvent([items(t).question ...
             sprintf('\n(%s = %s, %s = %s)',respkeys{1},...
@@ -63,11 +70,6 @@ try
             st,'y',texty);
         % stimuli
         for s = 1:nstim
-            % NB, even if you wanted images we use the videoevent for
-            % flexibility
-            ev.stim(s) = VideoEvent(stimstruct(s).(target),st,...
-                'alpha',stimstruct(s).alpha,'rect',stimrect,...
-                'rewind',rewind);
             % now conditions are every perm of stim / item
             nc = nc+1;
             onevents = repmat({ev.stim(s),ev.question(t),ev.flip,...
