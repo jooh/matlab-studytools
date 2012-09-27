@@ -101,6 +101,10 @@ classdef Study < hgsetget & dynamicprops
                 (180/pi)) / self.resolution(1);
             % And the reciprocal
             self.deg2px = self.px2deg^-1;
+            % you are probably entering greyscale values in [0 1] range
+            if self.bgcolor <= 1
+                self.bgcolor = uint8(self.bgcolor * 255);
+            end
             % Figure out a text color
             if mean(self.bgcolor) > 200
                 % black on light backgrounds

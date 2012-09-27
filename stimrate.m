@@ -1,5 +1,6 @@
 % Present images or videos in a figure window and ask subject to rate each
-% stimulus by key presses.
+% stimulus by key presses. Function wrapper for lower-level RatingTask
+% object.
 % res = stimrate(stimstruct,itemstruct,options)
 function res = stimrate(stimstruct,items,varargin)
 
@@ -11,35 +12,25 @@ end
 
 getArgs(varargin,{'bgcolor',[128 128 128],'stimsize',7,'nreps',1,...
     'windowed',0,'verbose',0,'target','image','framerate',24,...
-    'respkeys',{'1','2','3','4','5'},'rewind',1,'itidur',1});
+    'respkeys',{'c','v','b','n','m'},'rewind',1,'itidur',1});
 
+% counts
 nitems = length(items);
 nstim = length(stimstruct);
-ntrials = nitems * nstim * nrepeats;
+ntrials = nitems * nstim * nreps;
 noptions = length(respkeys);
 
+% we don't explicitly code event duration
 frametime = 1/framerate;
-
-% work out random stim/item order
-stimorder = repmat(1:nstim,[1 nitems*nrepeats]);
-itemorder = repmat(1:nitems,[1 nstim*nrepeats]);
-randind = randperm(ntrials);
-
-res.response = NaN([1 ntrials]);
-% Store a scalar 'category' for each item based on scoring (so abs(1) for
-% distinctiveness, abs(2) for attractiveness.
-res.itemcat = NaN([1 ntrials]);
-res.stimorder = stimorder(randind);
-res.itemorder = itemorder(randind);
-
+nframes = size(stimstruct(1).(target),4);
 orgsize = size(stimstruct(1).(target));
 ar = orgsize(1) / orgsize(2);
 % will be 1 for images
-nframes = size(stimstruct(1).(target),4);
 
 % Setup basic study
 % NB, construct is a property we need to add to each condition
-st = RatingTask('conditionname','construct','keyboardkeys',respkeys);
+st = RatingTask('conditionname','construct','keyboardkeys',respkeys,...
+    'windowed',windowed,'verbose',verbose,'bgcolor',bgcolor);
 
 try
     st.openwindow;
@@ -47,20 +38,20 @@ try
     printfun('configuring events');
     stimrect = [0 0 st.deg2px * [stimsize ar*stimsize]];
     stimrect = CenterRectOnPoint(stimrect,st.xcenter,st.ycenter);
-    texty = st.ycenter + stdeg2px*stimsize/2;
+    texty = st.ycenter + st.deg2px*stimsize * (2/3);
     % scrambled ISIs in random sequence with ntrials length
     % (can just keep calling to get new, random scrambles)
-    ev.iti = VideoEvent(reshape([ss.stimulus.scramble],...
-        [asrow(size(ss.stimulus(1).scramble),2) ...
-            size(ss.stimulus(1).scramble,3) length(stimstruct)]),...
-        st, randpermrep(nstim,nitems*nreps),'alpha',stimstruct(1).alpha,...
-        'rect',stimrect);
+    ev.iti = VideoEvent(reshape([stimstruct.scramble],...
+        [asrow(size(stimstruct(1).scramble),2) ...
+            size(stimstruct(1).scramble,3) length(stimstruct)]),...
+        st, 'frameind', randpermrep(nstim,nitems*nreps),...
+        'alpha',stimstruct(1).alpha,'rect',stimrect);
     % base events
     ev.flip = FlipEvent(st);
     ev.resp_on = KeyboardCheck('duration',frametime,...
         'validkeys',st.validkeys);
     % no response log
-    ev.resp_off = KeyboardCheck('duration',1,...
+    ev.resp_off = KeyboardCheck('duration',itidur,...
         'validkeys',[]);
     % text events
     nc = 0;
@@ -74,22 +65,31 @@ try
         for s = 1:nstim
             % NB, even if you wanted images we use the videoevent for
             % flexibility
-            ev.stim(s) = VideoEvent(stimstruct(s).(target),...
+            ev.stim(s) = VideoEvent(stimstruct(s).(target),st,...
                 'alpha',stimstruct(s).alpha,'rect',stimrect,...
                 'rewind',rewind);
             % now conditions are every perm of stim / item
             nc = nc+1;
-            onevents = repmat({ev.stim(s),ev.flip,ev.resp_on},...
-                [1 nframes]);
+            onevents = repmat({ev.stim(s),ev.question(t),ev.flip,...
+                ev.resp_on},[1 nframes]);
             % must set duration==inf to force looping
-            st.conditions(nc) = Condition([offevents onevents],...
+            st.conditions(nc) = Condition(onevents,...
                 'name',sprintf('stim%02d_item%02d',s,t),...
-                'timecontrol',st.timecontrol,'duration',Inf);
+                'timecontrol',st.timecontrol,'duration',Inf,...
+                'skiponresponse',1);
             % need to add custom prop for underlying construct
             addprop(st.conditions(nc),'construct');
             st.conditions(nc).construct = items(t).scoring;
         end
     end
+    % iti as separate event to enable continuouous video looping
+    st.conditions(nc+1) = Condition(offevents,...
+        'name','iti','timecontrol',st.timecontrol);
+    addprop(st.conditions(nc+1),'construct');
+    st.conditions(nc+1).construct = 0;
+    % conditions intermixed with iti
+    trialinds = asrow([randpermrep(nc,ntrials); ones(1,ntrials)*(nc+1)]);
+    st.runtrials(trialinds);
 catch
     e = lasterror;
     st.closewindow;
@@ -97,67 +97,6 @@ catch
     keyboard;
     error('crashed')
 end
-
-for t = 1:ntrials
-    it = items(res.itemorder(t));
-    try
-        scramble = stimstruct(res.stimorder(t)).scramble;
-    catch
-        scramble = uint8(255*rand(size(im)));
-    end
-    % show stim (image or vid for now)
-    stimfun(stimstruct,res.itemorder(t));
-
-    title({it.question,sprintf('(1 = %s, %d = %s)',it.label_low,...
-        options.noptions,it.label_high)})
-    drawnow;
-    ok = 0;
-    while ~ok
-        keydown = waitforbuttonpress;
-        if keydown==1
-            key = str2num(get(F,'currentcharacter'));
-            if ~isempty(key) && any(key==validkeys)
-                if it.scoring < 0
-                    % reverse scoring
-                    res.response(t) = options.noptions - (key-1);
-                else
-                    res.response(t) = key;
-                end
-                res.itemcat(t) = abs(it.scoring);
-                ok = 1;
-            end
-        end
-        % Give the CPU a break
-        pause(1e-5);
-    end
-    cla;
-    imshow(scramble);
-    drawnow;
-    % iti
-    pause(1+rand(1));
-    cla;
-end
-close(F);
-
-% SUB FUNCTIONS
-
-% show image
-function showim(stimstruct,trial)
-
-im = stimstruct(trial).image;
-if isfield(stimstruct,'alpha')
-    alpha = stimstruct(trial).alpha;
-else
-    alpha = 1;
-end
-h = imshow(im);
-set(h,'alphadata',alpha);
-
-return
-
-% show vid at 24 fps
-function showvid(stimstruct,trial)
-
-frames = im2frame(stimstruct(trial).vid;
-movie(frames,1,24);
-return
+res = st.exportstatic;
+printfun('finished stimrate')
+st.closewindow;

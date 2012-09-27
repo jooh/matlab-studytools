@@ -17,5 +17,5 @@ for n = 1:nitems
     items(n).question =  tline{1}{:};
     items(n).label_low = tline{2}{:};
     items(n).label_high = tline{3}{:};
-    items(n).scoring = tline{4};
+    items(n).scoring = double(tline{4});
 end

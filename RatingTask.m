@@ -6,7 +6,6 @@ classdef RatingTask < Study
     properties
         responsename = '';
         noptions = 5;
-        keyind = [];
         timeind = 1; % score RTs relative to this studyevent
         conditionname = 'name'; % construct
         scoring = 1; % positive by default
@@ -26,11 +25,12 @@ classdef RatingTask < Study
         function initialisescore(self,trialorder);
             % prepare the score field for study (clearing out whatever is
             % already in there)
-            self.constructs = unique(...
-                self.conditions(unique(trialorder)).conditionname);
+            allconstructs = cell2mat(get(...
+                self.conditions,self.conditionname));
+            self.constructs = unique(allconstructs);
             % struct arr with one entry per construct (collapsing
             % individual items)
-            self.score = struct('construct',constructs,...
+            self.score = struct('construct',num2cell(self.constructs),...
                 'mean',[],'stdev',[],'n',0,'median',[],'rawresp',[],...
                 'rawrt',[]);
         end
@@ -39,26 +39,33 @@ classdef RatingTask < Study
             % Populate 'score' field in self.trials(t) with result of
             % current trial
             % find index into correct construct for this condition
-            conind = findStrInArray(self.constructs,...
-                self.trials(t).condition.conditionname);
+            conind = find(self.constructs ==  ...
+                self.trials(t).condition.construct);
             % extract keys and times
+            respinds = findStrInArray(cellfun(@(x)x.name,...
+                self.trials(t).condition.studyevents,'uniformoutput',...
+                false),self.responsename);
+            % keys
             respkeys = cell2mat(self.trials(t).response(respinds));
+            % times
             responsetime = cell2mat(self.trials(t).responsetime(respinds));
             % Convert to RT
             rts = responsetime - self.trials(t).time(self.timeind);
-            % restrict to the correct key, first press
-            correctkey = respkeys==self.validkeys(self.keyind);
-            firstind = find(correctkey,1,'first');
-            % set trial score
-            rt = rts(firstind);
-            % TODO: SCORE - 1 / -1 etc
-            respkey = respkeys(firstind);
-            self.trials(t).score.rt = rt;
-            self.trials(t).score.respk = respkey;
-            self.trials(t).score.construct = self.constructs{conind};
-            if isempty(correctkey)
+            % Restrict to correct keys
+            [goodkeys,goodinds,validind] = intersect(respkeys,...
+                self.validkeys);
+            if isempty(goodkeys)
                 return
             end
+            % only consider first resp
+            respk = goodkeys(1);
+            % set trial score
+            rt = rts(goodinds(1));
+            self.trials(t).score.rt = rt;
+            % store as score - with negative scoring support
+            self.trials(t).score.respk = abs(validind - ...
+                ((1+self.noptions)*(self.constructs(conind)<0)));
+            self.trials(t).score.construct = abs(self.constructs(conind));
             % copy score to condition as well
             self.trials(t).condition.result(...
                 self.trials(t).condition.ncalls).score = ...

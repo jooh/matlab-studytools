@@ -65,7 +65,7 @@ classdef Condition < hgsetget & dynamicprops
                 % ideal timings relative to onset
                 self.timing = cumsum(eventdurations);
             end
-            assert(~isinf(self.duration)&&~self.skiponresponse,...
+            assert((isinf(self.duration)&&~self.skiponresponse)==0,...
                 'must set skiponresponse if using infinite duration')
             % Set condition duration to equal event duration by default (so
             % fixed dur or inf if you have infs in event timings)
@@ -90,20 +90,21 @@ classdef Condition < hgsetget & dynamicprops
             % track ideal time when condition should end
             conendtime = self.timecontrol.check+self.duration;
             outofcontime = 0;
+            skipcon = 0;
             % potentially run through the event sequence multiple times,
             % e.g. when displaying a video and waiting for a response
-            while ~outofcontime
+            while ~any([outofcontime skipcon])
                 % run event timings relative to this
                 calltime = self.timecontrol.check;
                 % iterate over events
                 for e = 1:self.nevents
-                    skip = 0;
+                    skipevent = 0;
                     outofeventtime = 0;
                     self.result(self.ncalls).time(e) = ...
                         self.timecontrol.check;
                     responded = 0;
                     % while the eventdur is 
-                    while ~any([outofcontime outofeventtime skip])
+                    while ~any([outofcontime outofeventtime skipevent skipcon])
                         self.studyevents{e}.call;
                         if ~isempty(self.studyevents{e}.response)
                             responded = 1;
@@ -124,15 +125,16 @@ classdef Condition < hgsetget & dynamicprops
                             end
                         end
                         % check for skipahead flag and timeout
-                        skip = responded && ...
+                        skipevent = responded && ...
                             self.studyevents{e}.skiponresponse;
+                        skipcon = responded && self.skiponresponse;
                         % now absolute timings to reduce lag
                         timenow = self.timecontrol.check;
                         outofeventtime = (calltime + self.timing(e)) < ...
                             timenow;
                         outofcontime = conendtime < timenow;
-                    end % / while ~any([outofcontime outofeventtime skip])
-                    if outofcontime
+                    end % / while ~any([outofcontime outofeventtime skipevent])
+                    if outofcontime || skipcon
                         % kill remainder of event loop
                         break
                     end
