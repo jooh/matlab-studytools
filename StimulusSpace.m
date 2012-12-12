@@ -111,7 +111,7 @@ classdef StimulusSpace < hgsetget
                 attrtype = 'col';
             elseif ismat(test)
                 % Need to flatten and then save
-                attr = cellfun(@asrow,{self.stimulus.(attribute)},...
+                attr = cellfun(@asrow,get(self.stimulus,attribute)',...
                     'uniformoutput',false)';
                 attrtype = 'mat';
             else
