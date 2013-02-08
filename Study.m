@@ -15,6 +15,9 @@ classdef Study < hgsetget & dynamicprops
         validkeys = [];
         location = 'pc';
         scanobj = ScanObjNull;
+        psychaudio = [];
+        samplerate = [];
+        naudiochannels= [];
         resolution = [1024 768];
         oldresolution = struct;
         px2deg = [];
@@ -170,6 +173,21 @@ classdef Study < hgsetget & dynamicprops
             Screen('TextColor',self.window,self.textpar.color);
             HideCursor;
             Screen(self.window,'Flip');
+            % audio configuration
+            InitializePsychSound;
+            if PsychPortAudio('GetOpenDeviceCount') == 1
+                PsychPortAudio('Close',0);
+            end
+            if ~isempty(self.samplerate)
+                if ispc
+                    audiodevices = PsychPortAudio('GetDevices',2);
+                    outdevice = strcmp('Microsoft Sound Mapper - Output',{audiodevices.DeviceName});
+                    hd.outdevice = 3;
+                    self.psychaudio = PsychPortAudio('Open',audiodevices(outdevice).DeviceIndex,[],[],self.samplerate,self.naudiochannels);
+                else
+                    self.psychaudio = PsychPortAudio('Open',[],[],[],self.samplerate,self.naudiochannels);
+                end
+            end
         end
 
         function closewindow(self)

@@ -64,6 +64,9 @@ classdef Condition < hgsetget & dynamicprops
                 % is much easier
                 % ideal timings relative to onset
                 self.timing = cumsum(eventdurations);
+                if isempty(self.timing)
+                    self.timing = 0;
+                end
             end
             assert((isinf(self.duration)&&~self.skiponresponse)==0,...
                 'must set skiponresponse if using infinite duration')

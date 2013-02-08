@@ -7,6 +7,7 @@ classdef NBack < Study
         keyind = 1;
         timeind = 1; % score RTs relative to this studyevent
         conditionname = 'name'; % use custom field for flexible 1-back
+        compfun = @strcmp;
         score = struct;
     end
 
@@ -17,9 +18,12 @@ classdef NBack < Study
             if isempty(s.responsename)
                 s.responsename = 'responsecheck';
             end
+            if isnumeric(s.conditionname)
+                s.compfun = @isequal;
+            end 
         end
 
-        function initialisescore(self,trialorder);
+        function initialisescore(self,trialorder)
             % prepare the score field for study (clearing out whatever is
             % already in there)
             self.score = struct('ntrials',length(trialorder),...
@@ -47,7 +51,7 @@ classdef NBack < Study
                 self.trials(t).score.wasrespeat = 0;
                 return
             end
-            self.trials(t).score.wasrepeat = strcmp(...
+            self.trials(t).score.wasrepeat = self.compfun(...
                 self.trials(t).condition.(self.conditionname),...
                 self.trials(t-self.n).condition.(self.conditionname));
             % copy score to condition as well
