@@ -318,6 +318,14 @@ classdef Study < hgsetget & dynamicprops
                 res.postcondition = get(res.postcondition);
             end
             res.timecontrol = get(res.timecontrol);
+            % strip function handles since these can cause crashes
+            handles = structfun(@(x)isa(x,'function_handle'),res);
+            if any(handles)
+                fns = fieldnames(res)';
+                for f = fns(handles)
+                    res.(f{1}) = [];
+                end
+            end
         end
     end
 
