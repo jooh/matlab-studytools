@@ -39,6 +39,7 @@ classdef Study < hgsetget & dynamicprops
         ET_serial = ''; % handle to eyetracking serial port object
         eyetrack = 0;
         rundur = []; % estimated run duration from initialisetrials
+        feedback = 0; % flag for displaying performance feedback
     end
 
     properties (Abstract)
