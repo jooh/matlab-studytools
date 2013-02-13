@@ -118,7 +118,7 @@ while ~ready
         if strcmp(command,'ET_CHG')
             % Coordinates for point
             xy = points(str2num(command_etc{2}),:)';
-            Screen('DrawDots',window,xy,5,targcolour);
+            Screen('DrawDots',window,xy,targsize,targcolour);
             Screen(window,'Flip');
             % Reset timeout counter
             ntries = 0;
