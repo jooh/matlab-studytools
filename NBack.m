@@ -9,6 +9,10 @@ classdef NBack < Study
         conditionname = 'name'; % use custom field for flexible 1-back
         compfun = @strcmp;
         score = struct;
+        feedbackhit = Condition([]);
+        feedbackmiss = Condition([]);
+        feedbackfa = Condition([]);
+        feedbackcr = Condition([]);
     end
 
     methods
@@ -71,6 +75,25 @@ classdef NBack < Study
             self.score.nmiss = self.score.nmiss + ...
                 (~self.trials(t).score.didrespond && ...
                 self.trials(t).score.wasrepeat);
+            % also show feedback?
+            if self.feedback
+                % only show feedback when behaviourally correct AND you
+                % have defined a feedback condition for that outcome
+                if self.trials(t).score.wasrepeat
+                    if self.trials(t).score.didrespond && ~isempty(self.feedbackhit)
+                        self.feedbackhit.call;
+                    elseif ~self.trials(t).score.didrespond && ~isempty(self.feedbackmiss)
+                        self.feedbackmiss.call;
+                    end
+                else
+                    if self.trials(t).score.didrespond && ~isempty(self.feedbackfa)
+                        self.feedbackfa.call;
+                    elseif ~self.trials(t).score.didrespond && ~isempty(self.feedbackcr)
+                        self.feedbackcr.call;
+                    end
+                end
+            end
         end
+
     end
 end
