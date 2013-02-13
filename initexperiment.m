@@ -28,6 +28,7 @@ defs.studydir = studydir;
 defs.savedata = 1;
 defs.prefix = '';
 defs.eyetrack = 0;
+defs.feedback = 0;
 par = varargs2structfields(varargin,defs,defs.verbose);
 
 if par.debug
