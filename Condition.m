@@ -92,25 +92,42 @@ classdef Condition < hgsetget & dynamicprops
             self.ncalls = self.ncalls+1;
             % track ideal time when condition should end
             conendtime = self.timecontrol.check+self.duration;
-            outofcontime = 0;
-            skipcon = 0;
-            % potentially run through the event sequence multiple times,
-            % e.g. when displaying a video and waiting for a response
+            % flag for condition timer
+            outofcontime = false;
+            % flag for responses when skiponresponses
+            skipcon = false;
+
+            % keep running the condition until out of time or skipping on
+            % response
             while ~any([outofcontime skipcon])
                 % run event timings relative to this
                 calltime = self.timecontrol.check;
                 % iterate over events
                 for e = 1:self.nevents
-                    skipevent = 0;
-                    outofeventtime = 0;
+                    % flag for skiponresponse for the event (e.g. if
+                    % infinite duration and waiting for a response)
+                    skipevent = false;
+                    % flag for event timer
+                    outofeventtime = false;
+                    % event timings are relative to this
                     self.result(self.ncalls).time(e) = ...
                         self.timecontrol.check;
-                    responded = 0;
-                    % while the eventdur is 
-                    while ~any([outofcontime outofeventtime skipevent skipcon])
+                    % flag for responses inside to this event
+                    responded = false;
+                    % flag to ensure that each event gets called at least
+                    % once. This is important to insure that flip events
+                    % get called even if we are lagging.
+                    ranonce = false;
+
+                    % if we were awaiting a response (skipevent,skipcon),
+                    % always skip ahead. If we were awaiting the end of the
+                    % timer (outofcontime,outofeventtime), only skip once
+                    % the event has been called. 
+                    while ~(skipevent || skipcon) && ~(ranonce && (outofcontime || outofeventtime))
                         self.studyevents{e}.call;
+                        ranonce = true;
                         if ~isempty(self.studyevents{e}.response)
-                            responded = 1;
+                            responded = true;
                             if self.logresponses
                                 % add response to log
                                 self.result(self.ncalls).response{e} = ...
@@ -136,13 +153,13 @@ classdef Condition < hgsetget & dynamicprops
                         outofeventtime = (calltime + self.timing(e)) < ...
                             timenow;
                         outofcontime = conendtime < timenow;
-                    end % / while ~any([outofcontime outofeventtime skipevent])
-                    if outofcontime || skipcon
+                    end % / while (this event)
+                    if skipcon
                         % kill remainder of event loop
                         break
                     end
                 end % / for e = 1:self.nevents
-            end % / while ~outofcontime
+            end % / while (this condition)
             % store what time we got out of the condition
             self.result(self.ncalls).endtime = self.timecontrol.check;
         end % / call method
