@@ -18,7 +18,7 @@ classdef Study < hgsetget & dynamicprops
         psychaudio = [];
         samplerate = [];
         naudiochannels= [];
-        resolution = [1024 768];
+        resolution = [];
         oldresolution = struct;
         px2deg = [];
         deg2px = [];
@@ -84,6 +84,10 @@ classdef Study < hgsetget & dynamicprops
                     % assume you've entered a cell array of keys
                     self.validkeys = self.keyboardkeys;
                     self.printfun('running in PC mode');
+                    % default to native for our Dells
+                    if isempty(self.resolution)
+                        self.resolution = [1280 1024];
+                    end
                 case 'mri'
                     self.screen = 0;
                     self.totdist = 913;
@@ -91,6 +95,21 @@ classdef Study < hgsetget & dynamicprops
                     self.validkeys = self.buttonboxkeys;
                     self.scanobj = actxserver('MRISync.ScannerSync');
                     self.printfun('running in scanner mode');
+                    % default to projector native
+                    if isempty(self.resolution)
+                        self.resolution = [1024 768];
+                    end
+                case 'mrilcd'
+                    self.screen = 0;
+                    self.totdist = 913; % TO BE CONFIRMED
+                    self.screenwidth = 698.4;
+                    self.validkeys = self.buttonboxkeys;
+                    self.scanobj = actxserver('MRISync.ScannerSync');
+                    self.printfun('running in scanner mode (new LCD)');
+                    % default to lcd native
+                    if isempty(self.resolution)
+                        self.resolution = [1920 1080];
+                    end
                 otherwise
                     error('unrecognised location: %s',self.location)
             end
