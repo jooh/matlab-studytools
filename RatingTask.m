@@ -9,7 +9,6 @@ classdef RatingTask < Study
         timeind = 1; % score RTs relative to this studyevent
         conditionname = 'name'; % construct
         scoring = 1; % positive by default
-        score = struct;
         constructs = {}; % cell array of unique conditionnames
     end
 

@@ -8,7 +8,6 @@ classdef NBack < Study
         timeind = 1; % score RTs relative to this studyevent
         conditionname = 'name'; % use custom field for flexible 1-back
         compfun = @strcmp;
-        score = struct;
         feedbackhit = Condition([]);
         feedbackmiss = Condition([]);
         feedbackfa = Condition([]);

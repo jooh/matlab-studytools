@@ -40,11 +40,12 @@ classdef Study < hgsetget & dynamicprops
         eyetrack = 0;
         rundur = []; % estimated run duration from initialisetrials
         feedback = 0; % flag for displaying performance feedback
-    end
-
-    properties (Abstract)
         score;  % summary descriptives in subclass
     end
+
+    %properties (Abstract)
+        %score;  % summary descriptives in subclass
+    %end
 
 
     methods
@@ -347,10 +348,19 @@ classdef Study < hgsetget & dynamicprops
                 end
             end
         end
+
+        function scoretrial(self,t)
+            % do nothing
+        end
+
+        function initialisescore(self,trials)
+            % no score
+        end
+
     end
 
-    methods (Abstract)
-        scoretrial(self,t)
-        initialisescore(self)
-    end
+    %methods (Abstract)
+        %scoretrial(self,t)
+        %initialisescore(self)
+    %end
 end
