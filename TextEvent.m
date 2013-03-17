@@ -13,31 +13,38 @@ classdef TextEvent < StudyEvent
 
     methods
         function s = TextEvent(textstr,st,varargin)
+            if nargin==0
+                return
+            end
             s.textstr = textstr;
-            s = varargs2structfields(varargin,s);
+            s = varargs2structfields(varargin,s,0);
             % in principle we should use st.x and st.y here but
             % unfortunately DrawFormattedText is pretty dumb with placement
             % (x and y are for top left corner, not centre of text box) so
             % using the 'center' keyword is probably preferable in most
             % cases
-            if isempty(s.x)
-                s.x = 'center';
+            s.initialisetext(st);
+        end
+
+        function initialisetext(self,st)
+            self.window = st.window;
+            if isempty(self.x)
+                self.x = 'center';
             end
-            if isempty(s.y)
-                s.y = 'center';
+            if isempty(self.y)
+                self.y = 'center';
             end
-            if isempty(s.color)
+            if isempty(self.color)
                 % default font color should be someting that contrasts
                 % with background
-                s.color = st.textpar.color;
+                self.color = st.textpar.color;
             end
-            if isempty(s.txtwrap)
-                s.txtwrap = st.textpar.txtwrap;
+            if isempty(self.txtwrap)
+                self.txtwrap = st.textpar.txtwrap;
             end
-            if isempty(s.vspacing)
-                s.vspacing = st.textpar.vspacing;
+            if isempty(self.vspacing)
+                self.vspacing = st.textpar.vspacing;
             end
-            s.window = st.window;
         end
 
         function call(self)
