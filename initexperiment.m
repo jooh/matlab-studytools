@@ -29,6 +29,7 @@ defs.savedata = 1;
 defs.prefix = '';
 defs.eyetrack = 0;
 defs.feedback = 0;
+defs.suffix = '';
 par = varargs2structfields(varargin,defs,defs.verbose);
 
 if par.debug
@@ -58,7 +59,7 @@ if madedir
 end
 
 % initialise experiment and session
-expdir = fullfile(par.subdir,['data_' par.expname]);
+expdir = fullfile(par.subdir,['data_' par.expname par.suffix]);
 madedir = mkdirifneeded(expdir);
 submat = fullfile(expdir,'subdata.mat');
 if madedir || ~exist(submat,'file')
