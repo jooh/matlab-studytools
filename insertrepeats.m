@@ -1,8 +1,16 @@
 % Insert n*c repeats into vector v, where c is the number of unique values
 % in v. The resulting vector has the same number of repeats for each
-% condition
-% outv = insertrepeats(v,n);
-function outv = insertrepeats(v,n);
+% condition.
+%
+% By default, we insert an exact repeat, but if repcode is defined this
+% value gets entered instead.
+%
+% outv = insertrepeats(v,n,repcode);
+function outv = insertrepeats(v,n,repcode);
+
+if ieNotDefined('repcode')
+    repcode = [];
+end
 
 vu = unique(v);
 nu = length(vu);
@@ -17,6 +25,11 @@ for c = vu
         % every iteration
         hits = find(outv==c);
         ind = hits(ascol(randperm(length(hits)),1));
-        outv = [outv(1:ind) outv(ind:end)];
+        if isempty(repcode)
+            extra = outv(ind);
+        else
+            extra = repcode;
+        end
+        outv = [outv(1:ind) extra outv(ind+1:end)];
     end
 end
