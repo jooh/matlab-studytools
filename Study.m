@@ -77,7 +77,7 @@ classdef Study < hgsetget & dynamicprops
             % always convert key presses to something recognisable
             self.keyboardkeys = KbName(self.keyboardkeys);
             switch self.location
-                case 'pc'
+                case {'pc','mba'}
                     screens = Screen('Screens');
                     self.screen = screens(ceil(length(screens)/2));
                     self.totdist = '500';
@@ -87,7 +87,11 @@ classdef Study < hgsetget & dynamicprops
                     self.printfun('running in PC mode');
                     % default to native for our Dells
                     if isempty(self.resolution)
-                        self.resolution = [1280 1024];
+                        if strcmp(self.location,'pc')
+                            self.resolution = [1280 1024];
+                        else
+                            self.resolution = [1440 900];
+                        end
                     end
                 case 'mri'
                     self.screen = 0;
