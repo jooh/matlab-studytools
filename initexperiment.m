@@ -30,6 +30,8 @@ defs.prefix = '';
 defs.eyetrack = 0;
 defs.feedback = 0;
 defs.suffix = '';
+defs.scantime = false;
+defs.tr = [];
 par = varargs2structfields(varargin,defs,defs.verbose);
 
 if par.debug
@@ -56,6 +58,12 @@ madedir = mkdirifneeded(par.subdir);
 if madedir
     yn = input(sprintf('new subject %s, continue? (yn): ',par.subject),'s');
     assert(~strcmp(lower(yn),'n'),'aborted experiment.');
+end
+
+if par.scantime
+    if isempty(par.tr)
+        par.tr = input('tr (s): ');
+    end
 end
 
 % initialise experiment and session
