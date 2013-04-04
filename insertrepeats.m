@@ -12,6 +12,11 @@ if ieNotDefined('repcode')
     repcode = [];
 end
 
+if n==0
+    outv = v;
+    return
+end
+
 vu = unique(v);
 nu = length(vu);
 totn = n*nu;
