@@ -24,7 +24,7 @@ classdef Study < hgsetget & dynamicprops
         deg2px = [];
         bgcolor = [128 128 128];
         colors = struct('white',[],'black',[],'grey',[]);
-        textpar = struct('font','tahoma','size',14,'style',0,...
+        textpar = struct('font','tahoma','size',20,'style',0,...
             'vspacing',1.4,'color',[1 1 1],'txtwrap',50);
         xcenter = [];
         ycenter = [];
@@ -42,11 +42,6 @@ classdef Study < hgsetget & dynamicprops
         feedback = 0; % flag for displaying performance feedback
         score;  % summary descriptives in subclass
     end
-
-    %properties (Abstract)
-        %score;  % summary descriptives in subclass
-    %end
-
 
     methods
         function s = Study(varargin)
