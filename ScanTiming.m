@@ -10,10 +10,6 @@ classdef ScanTiming < Timing
         % estimate of tr.
         % t = ScanTiming(varargin)
             t = varargs2structfields(varargin,t);
-            if t.tr < 60
-                % assume you've provided the tr in s rather than ms
-                t.tr = t.tr * 1e3;
-            end
             t.units = 'scans';
         end
 
@@ -25,7 +21,8 @@ classdef ScanTiming < Timing
             % should now have an ok idea of what the actual tr is
             self.estimatetr;
             assert(isempty(oldtr) || (abs(oldtr-self.tr)<200),...
-                'tr diverges by more than 200 ms from tr estimate');
+                ['tr diverges by more than 200 ms from tr estimate :' ...
+                '%.2f vs %.2f'],oldtr,self.tr);
             % set first scan as whatever we've got at this point
             [self.first,scan] = deal(self.check);
         end
