@@ -11,7 +11,7 @@ classdef Study < hgsetget & dynamicprops
         totdist = 500;
         screenwidth = 380;
         keyboardkeys = {'v','b','n','m'};
-        buttonboxkeys = [28 26 24 22];
+        buttonboxkeys = [28 26 22 14];
         validkeys = [];
         location = 'pc';
         scanobj = ScanObjNull;
@@ -249,6 +249,7 @@ classdef Study < hgsetget & dynamicprops
             for t = 1:ntrials
                 fprintf(self.ET_serial,sprintf('ET_REM %s.png',...
                     self.trials(t).condition.name));
+                self.trials(t).starttime = self.timecontrol.check;
                 self.trials(t).condition.call;
                 % update the central trial log with the new result from
                 % the condition instance
@@ -290,8 +291,8 @@ classdef Study < hgsetget & dynamicprops
             % NB must be in alphabetical order to work with catstruct
             self.trials = struct('condition',...
                 num2cell(self.conditions(trialorder)),'endtime',[],...
-                'response',[],'responsetime',[],'score',[],'time',[],...
-                'timing',...
+                'response',[],'responsetime',[],'score',[],'starttime',[],...
+                'time',[],'timing',...
                 num2cell(cumsum([self.conditions(trialorder).soa])));
             % This loop sets up the cell arrays etc with appropriate
             % nevents for each trial
@@ -324,6 +325,7 @@ classdef Study < hgsetget & dynamicprops
         function res = exportstatic(self)
             % export data in static struct form
             res = get(self);
+
             res.conditions = get(res.conditions);
             for t = 1:length(res.trials)
                 res.trials(t).condition = get(res.trials(t).condition);
@@ -336,6 +338,10 @@ classdef Study < hgsetget & dynamicprops
             end
             if ~isempty(res.postcondition)
                 res.postcondition = get(res.postcondition);
+            end
+            if isa(self.timecontrol,'ScanTiming')
+                % update TR estimate
+                self.timecontrol.estimatetr;
             end
             res.timecontrol = get(res.timecontrol);
             % strip function handles since these can cause crashes

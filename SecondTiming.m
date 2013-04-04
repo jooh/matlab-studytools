@@ -23,8 +23,11 @@ classdef SecondTiming < Timing
         function waituntil(self,abstime)
         % wait until an absolute clock time. 
         % waituntil(abstime)
-            invoke(self.scanobj,'CheckPulseSynchronyForTime',...
-                (abstime-GetSecs)*1e3);
+            WaitSecs('UntilTime',abstime);
+            % it would be nice to use scanner sync to check the TR a bit,
+            % but unfortunately this method is not stable.
+        %invoke(self.scanobj,'CheckPulseSynchronyForTime',...
+             %   (abstime-GetSecs)*1e3);
         end
     end
 end

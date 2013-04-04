@@ -26,6 +26,12 @@ classdef ScanObjNull < handle
                     varargout{1} = 0;
                 case 'GetMeasuredTR'
                     varargout{1} = self.tr;
+                case 'SynchroniseExperiment'
+                    if varargin{2}==1
+                        WaitSecs(self.tr/1000);
+                    else
+                        error('unknown option');
+                    end
                 case 'GetLastPulseNum'
                     varargout{1} = floor(...
                         (GetSecs*1000-self.firstscantime)/ self.tr);
