@@ -29,7 +29,8 @@ for c = vu
         % this needs to be inside the loop since outv length is changing on
         % every iteration
         hits = find(outv==c);
-        ind = hits(ascol(randperm(length(hits)),1));
+        inds = randperm(length(hits));
+        ind = hits(inds(1));
         if isempty(repcode)
             extra = outv(ind);
         else
