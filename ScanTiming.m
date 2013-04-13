@@ -39,7 +39,8 @@ classdef ScanTiming < Timing
         function waituntil(self,abstime)
         % keep synchronising until check returns abstime
         % waituntil(vol)
-            while self.check < abstime
+            ch = self.check;
+            for n = 1:(abstime-ch)
                 invoke(self.scanobj,'SynchroniseExperiment',1,0);
             end
         end
