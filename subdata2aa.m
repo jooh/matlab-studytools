@@ -1,4 +1,5 @@
 % Find the correct subdata entries for a set of AA sessions
+% data = subdata2aa(subdata,aap,sessiontarget,ndataperrun)
 function data = subdata2aa(subdata,aap,sessiontarget,ndataperrun)
 
 if ieNotDefined('ndataperrun')
@@ -16,6 +17,9 @@ assert(isempty(setdiff(selected,targetinds)),...
     'found non-target sessions in selected_sessions')
 % get relevant indices
 [x,subdatinds] = intersect(targetinds,selected);
-% upcast to make two subdatas per session
+% upcast to make n subdatas per session
 subup = upcastindices(subdatinds,ndataperrun);
+assert(max(subup)<=length(subdata),['Found %d sessions, %d subdatas. '...
+    'Time to pull?'],length(subup),length(subdata));
+    
 data = subdata(subup);
