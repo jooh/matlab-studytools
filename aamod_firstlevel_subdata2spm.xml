@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aap>
+    <tasklist>
+        <currenttask domain='subject' desc='add subdata events' modality='MRI' >
+            <qsub>
+                <timeBase>1</timeBase>
+                <memoryBase>1</memoryBase>
+            </qsub>
+            <permanenceofoutput>1</permanenceofoutput>
+            <sessiontarget>visobj-</sessiontarget>
+            <experimentname></experimentname>
+            <duration></duration>
+            <ignorenames><item></item></ignorenames>
+            <collapsenames>
+                <oldnames><item></item></oldnames>
+                <newname></newname>
+            </collapsenames>
+            <modelresponses>0</modelresponses>
+            <inputstreams>
+                <stream>firstlevel_spm</stream>  
+            </inputstreams>
+            
+            <outputstreams>
+                <stream>firstlevel_spm</stream>
+            </outputstreams>
+        </currenttask>
+    </tasklist>
+</aap>
