@@ -65,7 +65,9 @@ for sess = 1:nsub
         end
     end
         
-    unames = unique(names);
+    connames = {sessres.conditions.name};
+    unames = intersect(connames,unique(names),'stable');
+    
     if sess==1
         sessnames = unames;
         nreg = length(sessnames);
@@ -73,7 +75,8 @@ for sess = 1:nsub
         assert(length(unames)==nreg && all(strcmp(sessnames,unames)),...
             'the same conditions must appear in all runs');
     end
-    validnames = setdiff(unames,ignorenames);
+    validnames = setdiff(unames,ignorenames,'stable');
+
     if modelresponses
         validnames = [validnames {'responses'}];
     end
