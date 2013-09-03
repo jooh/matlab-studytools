@@ -101,7 +101,7 @@ classdef Study < hgsetget & dynamicprops
                     end
                 case 'mrilcd'
                     self.screen = 0;
-                    self.totdist = 913; % TO BE CONFIRMED
+                    self.totdist = 1565; % TO BE CONFIRMED
                     self.screenwidth = 698.4;
                     self.validkeys = self.buttonboxkeys;
                     self.scanobj = actxserver('MRISync.ScannerSync');
@@ -115,11 +115,7 @@ classdef Study < hgsetget & dynamicprops
             end
             % On any recent Mac OS version, PPT works very poorly at the
             % moment
-            if ismac
-                Screen('Preference','SkipSyncTests',1);
-            else
-                Screen('Preference','SkipSyncTests',0);
-            end
+            Screen('Preference','SkipSyncTests',1);
             self.px2deg = (2 * atan(self.screenwidth/2/self.totdist) * ...
                 (180/pi)) / self.resolution(1);
             % And the reciprocal
@@ -318,7 +314,7 @@ classdef Study < hgsetget & dynamicprops
         function initialisescanobj(self)
             err = invoke(self.scanobj,'Initialize','');
             assert(~err,'Keithley error');
-            invoke(self.scanobj,'SetTimeout',30e3);
+            invoke(self.scanobj,'SetTimeout',60e3);
             invoke(self.scanobj,'SetMSPerSample',2);
         end
 
@@ -352,6 +348,10 @@ classdef Study < hgsetget & dynamicprops
                     res.(f{1}) = [];
                 end
             end
+            % serial port object also doesn't save well
+            res.ET_serial = [];
+            % scanobj as NAME of class rather than class instance itself
+            res.scanobj = class(res.scanobj);
         end
 
         function scoretrial(self,t)
