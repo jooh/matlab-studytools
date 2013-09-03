@@ -101,7 +101,7 @@ classdef Study < hgsetget & dynamicprops
                     end
                 case 'mrilcd'
                     self.screen = 0;
-                    self.totdist = 913; % TO BE CONFIRMED
+                    self.totdist = 1565; 
                     self.screenwidth = 698.4;
                     self.validkeys = self.buttonboxkeys;
                     self.scanobj = actxserver('MRISync.ScannerSync');
@@ -109,6 +109,17 @@ classdef Study < hgsetget & dynamicprops
                     % default to lcd native
                     if isempty(self.resolution)
                         self.resolution = [1920 1080];
+                    end
+                case 'mrilcd43'
+                    self.screen = 0;
+                    self.totdist = 1565; 
+                    self.screenwidth = 522;
+                    self.validkeys = self.buttonboxkeys;
+                    self.scanobj = actxserver('MRISync.ScannerSync');
+                    self.printfun('running in scanner mode (new LCD, 4:3 aspect)');
+                    % I think we usually go with this res here
+                    if isempty(self.resolution)
+                        self.resolution = [1024 768];
                     end
                 otherwise
                     error('unrecognised location: %s',self.location)
