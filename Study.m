@@ -53,7 +53,6 @@ classdef Study < hgsetget & dynamicprops
         end
 
         function openwindow(self)
-            warning('off','catstruct:DuplicatesFound');
             if self.debug
                 self.verbose = 1;
                 self.windowed = 1;
@@ -113,9 +112,8 @@ classdef Study < hgsetget & dynamicprops
                 otherwise
                     error('unrecognised location: %s',self.location)
             end
-            % On any recent Mac OS version, PPT works very poorly at the
-            % moment
-            Screen('Preference','SkipSyncTests',1);
+            % make sure no one has hacked their way around sync problems
+            Screen('Preference','SkipSyncTests',0);
             self.px2deg = (2 * atan(self.screenwidth/2/self.totdist) * ...
                 (180/pi)) / self.resolution(1);
             % And the reciprocal
