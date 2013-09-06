@@ -41,6 +41,7 @@ classdef Study < hgsetget & dynamicprops
         rundur = []; % estimated run duration from initialisetrials
         feedback = 0; % flag for displaying performance feedback
         score;  % summary descriptives in subclass
+        forcesync = 1;
     end
 
     methods
@@ -124,7 +125,7 @@ classdef Study < hgsetget & dynamicprops
                     error('unrecognised location: %s',self.location)
             end
             % make sure no one has hacked their way around sync problems
-            Screen('Preference','SkipSyncTests',0);
+            Screen('Preference','SkipSyncTests',double(~self.forcesync));
             self.px2deg = (2 * atan(self.screenwidth/2/self.totdist) * ...
                 (180/pi)) / self.resolution(1);
             % And the reciprocal

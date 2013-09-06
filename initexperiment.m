@@ -31,6 +31,7 @@ defs.eyetrack = 0;
 defs.feedback = 0;
 defs.suffix = '';
 defs.scantime = false;
+defs.forcesync = true;
 defs.tr = [];
 par = varargs2structfields(varargin,defs,defs.verbose);
 
