@@ -97,7 +97,7 @@ else
     printfun(sprintf('predetermined randseed: %f',par.randseed));
 end
 s = RandStream.create('mt19937ar','seed',par.randseed);
-RandStream.setDefaultStream(s);
+RandStream.setGlobalStream(s);
 
 subdata(par.sessionI).par = par;
 subdata(par.sessionI).testtime = datestr(now);
