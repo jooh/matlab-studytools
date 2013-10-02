@@ -41,6 +41,7 @@ classdef Study < hgsetget & dynamicprops
         rundur = []; % estimated run duration from initialisetrials
         feedback = 0; % flag for displaying performance feedback
         score;  % summary descriptives in subclass
+        forcesync = 1;
     end
 
     methods
@@ -53,7 +54,6 @@ classdef Study < hgsetget & dynamicprops
         end
 
         function openwindow(self)
-            warning('off','catstruct:DuplicatesFound');
             if self.debug
                 self.verbose = 1;
                 self.windowed = 1;
@@ -101,7 +101,7 @@ classdef Study < hgsetget & dynamicprops
                     end
                 case 'mrilcd'
                     self.screen = 0;
-                    self.totdist = 913; % TO BE CONFIRMED
+                    self.totdist = 1565; 
                     self.screenwidth = 698.4;
                     self.validkeys = self.buttonboxkeys;
                     self.scanobj = actxserver('MRISync.ScannerSync');
@@ -110,16 +110,22 @@ classdef Study < hgsetget & dynamicprops
                     if isempty(self.resolution)
                         self.resolution = [1920 1080];
                     end
+                case 'mrilcd43'
+                    self.screen = 0;
+                    self.totdist = 1565; 
+                    self.screenwidth = 522;
+                    self.validkeys = self.buttonboxkeys;
+                    self.scanobj = actxserver('MRISync.ScannerSync');
+                    self.printfun('running in scanner mode (new LCD, 4:3 aspect)');
+                    % I think we usually go with this res here
+                    if isempty(self.resolution)
+                        self.resolution = [1024 768];
+                    end
                 otherwise
                     error('unrecognised location: %s',self.location)
             end
-            % On any recent Mac OS version, PPT works very poorly at the
-            % moment
-            if ismac
-                Screen('Preference','SkipSyncTests',1);
-            else
-                Screen('Preference','SkipSyncTests',0);
-            end
+            % make sure no one has hacked their way around sync problems
+            Screen('Preference','SkipSyncTests',double(~self.forcesync));
             self.px2deg = (2 * atan(self.screenwidth/2/self.totdist) * ...
                 (180/pi)) / self.resolution(1);
             % And the reciprocal
@@ -318,7 +324,7 @@ classdef Study < hgsetget & dynamicprops
         function initialisescanobj(self)
             err = invoke(self.scanobj,'Initialize','');
             assert(~err,'Keithley error');
-            invoke(self.scanobj,'SetTimeout',30e3);
+            invoke(self.scanobj,'SetTimeout',60e3);
             invoke(self.scanobj,'SetMSPerSample',2);
         end
 
@@ -352,6 +358,10 @@ classdef Study < hgsetget & dynamicprops
                     res.(f{1}) = [];
                 end
             end
+            % serial port object also doesn't save well
+            res.ET_serial = [];
+            % scanobj as NAME of class rather than class instance itself
+            res.scanobj = class(res.scanobj);
         end
 
         function scoretrial(self,t)
