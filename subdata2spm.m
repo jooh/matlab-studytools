@@ -42,6 +42,7 @@ for sess = 1:nsub
     ntrials = length(sessres.trials);
     names = arrayfun(@(n)sessres.trials(n).condition.name,1:ntrials,...
         'uniformoutput',false);
+    connames = {sessres.conditions.name};
     % check if any of the names are to be collapsed
     for cn = 1:length(collapsenames)
         if ~iscell(collapsenames(cn).oldnames)
@@ -63,9 +64,10 @@ for sess = 1:nsub
                     collapsenames(cn).newname);
             end
         end
+        connames(end+1) = {collapsenames(cn).newname};
     end
         
-    connames = {sessres.conditions.name};
+
     unames = intersect(connames,unique(names),'stable');
     
     if sess==1
