@@ -6,7 +6,7 @@ if ieNotDefined('ndataperrun')
     ndataperrun = 1;
 end
 
-% find the localiser sessions in aap
+% find the correct sessions in aap
 sessnames = {aap.acq_details.sessions.name};
 selected = aap.acq_details.selected_sessions;
 nselected = length(selected);
@@ -21,5 +21,5 @@ assert(isempty(setdiff(selected,targetinds)),...
 subup = upcastindices(subdatinds,ndataperrun);
 assert(max(subup)<=length(subdata),['Found %d sessions, %d subdatas. '...
     'Time to pull?'],length(subup),length(subdata));
-    
+
 data = subdata(subup);
