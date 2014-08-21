@@ -11,8 +11,8 @@ sessnames = {aap.acq_details.sessions.name};
 selected = aap.acq_details.selected_sessions;
 nselected = length(selected);
 targetinds = findStrInArray(sessnames,sessiontarget);
-% make sure we haven't selected sessions that weren't actually
-% localiser
+% make sure we haven't selected sessions that weren't actually in the
+% session
 assert(isempty(setdiff(selected,targetinds)),...
     'found non-target sessions in selected_sessions')
 % get relevant indices
