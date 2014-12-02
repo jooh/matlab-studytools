@@ -53,7 +53,7 @@ for sess = 1:nsub
             if strfind(thisname,'*')
                 % inexact match
                 thisname = strrep(thisname,'*','');
-                hits = findStrInArray(names,thisname,0);
+                hits = strfindcell(names,thisname);
             else
                 % exact match
                 hits = strfind(names,thisname);

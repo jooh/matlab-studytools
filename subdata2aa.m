@@ -10,7 +10,7 @@ end
 sessnames = {aap.acq_details.sessions.name};
 selected = aap.acq_details.selected_sessions;
 nselected = length(selected);
-targetinds = findStrInArray(sessnames,sessiontarget);
+targetinds = strfindcell(sessnames,sessiontarget);
 % make sure we haven't selected sessions that weren't actually in the
 % session
 assert(isempty(setdiff(selected,targetinds)),...

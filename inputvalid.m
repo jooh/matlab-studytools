@@ -2,7 +2,6 @@
 % o = inputvalid(question,[validoptions],[validclass])
 function o = inputvalid(question,validoptions,validclass)
 
-% TODO repair findStrInArray
 if ieNotDefined('validclass')
     validclass = '';
 end
@@ -32,7 +31,7 @@ while ~done
             continue
         end
         % Check against cell array of numbers
-        if optcell && ~any(findStrInArray(validoptions,o,1))
+        if optcell && ~any(strcmp(validoptions,o))
             fprintf('invalid response. Try again.\n')
             continue
         end
@@ -49,7 +48,7 @@ while ~done
             continue
         end
         % Check against cell array of strings
-        if optcell && ~any(findStrInArray(validoptions,o,1))
+        if optcell && ~any(strcmp(validoptions,o))
             fprintf('invalid response. Try again.\n')
             continue
         end

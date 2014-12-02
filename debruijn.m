@@ -110,7 +110,7 @@ assert(~err,['command failed with message: ' res]);
 % Extract data
 lines = textscan(res,'%s','delimiter','\n');
 lines = lines{1};
-headerlines = findStrInArray(lines,'Cycle found:');
+headerlines = strfindcell(lines,'Cycle found:');
 lines = lines(headerlines+2:end);
 seqstr = lines{1};
 % Convert to numbers in 1:k range
