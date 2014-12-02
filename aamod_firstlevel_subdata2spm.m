@@ -17,8 +17,11 @@ switch task
         expdir = fileparts(which(ts.experimentname));
         infile = fullfile(expdir,'subjects',subname,...
             ['data_' ts.experimentname],'subdata.mat');
-        % load events
+        % load events (also load psychtoolbox to prevent crashes)
+        oldpath = path;
+        start_psychtoolbox;
         subdata = loadbetter(infile);
+        path(oldpath);
         data = subdata2aa(subdata,aap,ts.sessiontarget,1);
         spmpath = aas_getfiles_bystream(aap,subj,'firstlevel_spm');
         load(spmpath);
