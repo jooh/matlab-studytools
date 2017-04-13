@@ -1,7 +1,9 @@
+% ScanTiming < Timing
 classdef ScanTiming < Timing
     % Timing object for running events relative to scans from scannersync
     properties
-        tr = [];
+        tr
+        scanobj
     end
 
     methods
@@ -14,17 +16,11 @@ classdef ScanTiming < Timing
         end
 
         function scan = begin(self)
-            err = invoke(self.scanobj,'StartExperiment',self.tr);
-            assert(~err,'StartExperiment failed!');
-            % figure out tr
-            oldtr = self.tr;
-            % should now have an ok idea of what the actual tr is
-            self.estimatetr;
-            assert(isempty(oldtr) || (abs(oldtr-self.tr)<200),...
-                ['tr diverges by more than 200 ms from tr estimate :' ...
-                '%.2f vs %.2f'],oldtr,self.tr);
-            % set first scan as whatever we've got at this point
-            [self.first,scan] = deal(self.check);
+            % initialise
+            self.scanobj('reset',self.tr);
+            % wait for first pulse - I think this is where things go weird.
+            [starttime,scan] = self.scanobj(1,Inf);
+            self.first = scan;
         end
 
         function tim = check(self)
@@ -32,30 +28,19 @@ classdef ScanTiming < Timing
         % previous and current properties
         % tim = check;
             self.previous = self.current;
-            [self.current,tim] = deal(invoke(self.scanobj,...
-                'GetLastPulseNum',0));
+            % check for scan number and return immediately
+            [~,scan] = self.scanobj(1,0);
+            [self.current,tim] = deal(scan);
         end
 
         function waituntil(self,abstime)
         % keep synchronising until check returns abstime
         % waituntil(vol)
-            ch = self.check;
-            for n = 1:(abstime-ch)
-                invoke(self.scanobj,'SynchroniseExperiment',1,0);
+            % wait until we are 1 short of the intended time (the final time we
+            % want to proceed)
+            while self.check < abstime
+                ch = self.check;
             end
-        end
-
-        function syncseconds(self,s)
-        % update tr estimate by waiting around for s duration
-        % syncseconds(s)
-            invoke(self.scanobj,'CheckPulseSynchronyForTime',s*1e3);
-        end
-
-        function tr = estimatetr(self)
-        % return an estimate of the tr (in ms) from scanobj. Will be more
-        % accurate the more time you spend on syncseconds or waituntil.
-        % tr = estimatetr;
-            [tr,self.tr] = deal(invoke(self.scanobj,'GetMeasuredTR'));
         end
     end
 end

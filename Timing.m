@@ -7,7 +7,6 @@ classdef Timing < hgsetget & dynamicprops
         first = 0; % absolute time at beginning of runtrials
         current = [];% best current estimate of time
         previous = []; % former current
-        scanobj = ScanObjNull; % Returns WaitSecs timestamps. Bit hacky.
         units = ''; % string describing what sort of timings we work with
     end
 

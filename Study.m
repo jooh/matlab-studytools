@@ -11,10 +11,9 @@ classdef Study < hgsetget & dynamicprops
         totdist = 500;
         screenwidth = 380;
         keyboardkeys = {'v','b','n','m'};
-        buttonboxkeys = [28 26 22 14];
+        buttonboxkeys = 1:4;
         validkeys = [];
         location = 'pc';
-        scanobj = ScanObjNull;
         psychaudio = [];
         samplerate = [];
         naudiochannels= [];
@@ -93,7 +92,6 @@ classdef Study < hgsetget & dynamicprops
                     self.totdist = 913;
                     self.screenwidth = 268;
                     self.validkeys = self.buttonboxkeys;
-                    self.scanobj = actxserver('MRISync.ScannerSync');
                     self.printfun('running in scanner mode');
                     % default to projector native
                     if isempty(self.resolution)
@@ -104,7 +102,6 @@ classdef Study < hgsetget & dynamicprops
                     self.totdist = 1565; 
                     self.screenwidth = 698.4;
                     self.validkeys = self.buttonboxkeys;
-                    self.scanobj = actxserver('MRISync.ScannerSync');
                     self.printfun('running in scanner mode (new LCD)');
                     % default to lcd native
                     if isempty(self.resolution)
@@ -115,7 +112,6 @@ classdef Study < hgsetget & dynamicprops
                     self.totdist = 1565; 
                     self.screenwidth = 522;
                     self.validkeys = self.buttonboxkeys;
-                    self.scanobj = actxserver('MRISync.ScannerSync');
                     self.printfun('running in scanner mode (new LCD, 4:3 aspect)');
                     % I think we usually go with this res here
                     if isempty(self.resolution)
@@ -233,8 +229,6 @@ classdef Study < hgsetget & dynamicprops
 
         function runtrials(self,trialorder)
             self.printfun('runtrials')
-            % need to reinit since this gets destroyed easily
-            self.initialisescanobj;
             if ~isempty(self.trials)
                 self.printfun('existing trials will be discarded')
             end
@@ -311,21 +305,12 @@ classdef Study < hgsetget & dynamicprops
             % descriptives across trials (computed by scoretrial)
             self.initialisescore(trialorder);
             self.rundur = self.trials(end).timing;
-            t_end = self.trials(end).timing + ...
-                self.trials(end).condition.soa;
-            if isinf(t_end) || isnan(t_end)
+            if isinf(self.rundur) || isnan(self.rundur)
                 self.printfun('run duration estimate not possible');
             else
                 self.printfun(sprintf('run duration: %.2f %s',...
-                    t_end,self.timecontrol.units));
+                    self.rundur,self.timecontrol.units));
             end
-        end
-
-        function initialisescanobj(self)
-            err = invoke(self.scanobj,'Initialize','');
-            assert(~err,'Keithley error');
-            invoke(self.scanobj,'SetTimeout',60e3);
-            invoke(self.scanobj,'SetMSPerSample',2);
         end
 
         function res = exportstatic(self)
@@ -345,10 +330,6 @@ classdef Study < hgsetget & dynamicprops
             if ~isempty(res.postcondition)
                 res.postcondition = get(res.postcondition);
             end
-            if isa(self.timecontrol,'ScanTiming')
-                % update TR estimate
-                self.timecontrol.estimatetr;
-            end
             res.timecontrol = get(res.timecontrol);
             % strip function handles since these can cause crashes
             handles = structfun(@(x)isa(x,'function_handle'),res);
@@ -360,8 +341,6 @@ classdef Study < hgsetget & dynamicprops
             end
             % serial port object also doesn't save well
             res.ET_serial = [];
-            % scanobj as NAME of class rather than class instance itself
-            res.scanobj = class(res.scanobj);
         end
 
         function scoretrial(self,t)

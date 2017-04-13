@@ -1,7 +1,7 @@
 classdef ButtonboxCheck < ResponseCheck
     % ButtonboxCheck < StudyEvent subclass for logging button responses
     properties
-        scanobj = [];
+        scanobj
         keyboardhand = KeyboardCheck;
     end
 
@@ -11,24 +11,24 @@ classdef ButtonboxCheck < ResponseCheck
         end
 
         function [respkey,resptime] = checkkeys(self);
-            respk = bitand(30,invoke(self.scanobj,'GetResponse'));
-            rawtime = GetSecs;
-            keyisdown = respk ~= 30;
-            resptime = [];
-            respkey = [];
-            if keyisdown
+            % single call check for buttons
+            resptime = self.scanobj(2:5,0);
+            valid = ~isnan(resptime);
+            respkey = find(valid);
+            resptime = resptime(valid);
+            if any(valid)
                 % ignore held keys
                 if self.keyisdown && respk==self.lastkey
+                    respkey = [];
+                    resptime = [];
                     return
                 end
-                resptime = rawtime;
-                respkey = respk;
                 % update internal state
-                self.keyisdown = keyisdown;
+                self.keyisdown = true;
                 self.lastkey = respkey;
             else
                 % reset to record repeated distinct presses of the same key
-                self.keyisdown = 0;
+                self.keyisdown = false;
                 self.lastkey = NaN;
             end
             % check for escape key on keyboard
