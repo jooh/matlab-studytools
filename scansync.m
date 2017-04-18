@@ -62,7 +62,7 @@ if isempty(daqstate)
     hasdaq = false;
     try
         D = daq.getDevices;
-        hasdaq = D.isvalid && ~any(strcmp({D.Vendor.ID},'ni')) && ...
+        hasdaq = D.isvalid && any(strcmp({D.Vendor.ID},'ni')) && ...
                 D.Vendor.isvalid && D.Vendor.IsOperational;
     catch err
         if ~strcmp(err.identifier,'MATLAB:undefinedVarOrClass')
@@ -95,7 +95,7 @@ if isempty(daqstate)
     daqstate.nrecorded = zeros(1,5);
     % we count pulses if they are >.02s apart, and button presses if they are
     % more than .2s apart
-    daqstate.pulsedur = [.02,ones(1,4)*.2];
+    daqstate.pulsedur = [.006,ones(1,4)*.2];
 end
 
 % always call once (so we get an update even if waituntil==0)
