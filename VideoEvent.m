@@ -19,6 +19,9 @@ classdef VideoEvent < StreamEvent
                 alpha = ones(size(vidframes));
             end
             s.nframe = size(vidframes,4);
+            if size(alpha,4) == 1 && s.nframe>1
+                alpha = repmat(alpha,[1,1,1,s.nframe]);
+            end
             % do we need to make texture?
             if isempty(s.tex)
                 % add singleton dims if necessary (e.g. image rather than
@@ -31,7 +34,7 @@ classdef VideoEvent < StreamEvent
                 s.tex = NaN([1 s.nframe]);
                 for f = 1:s.nframe
                     s.tex(f) = Screen('MakeTexture',s.window,...
-                    cat(3,vidframes(:,:,:,f),uint8(255*s.alpha)));
+                    cat(3,vidframes(:,:,:,f),s.alpha(:,:,:,f)));
                 end
             end
             s.initialiseframes;
