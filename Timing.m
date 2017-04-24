@@ -17,6 +17,10 @@ classdef Timing < hgsetget & dynamicprops
             end
             t = varargs2structfields(varargin,t);
         end
+
+        function update(self,newtime)
+            [self.previous,self.current] = deal(self.current,newtime);
+        end
     end
 
     methods (Abstract)
