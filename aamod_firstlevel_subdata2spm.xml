@@ -16,6 +16,7 @@
                 <newname></newname>
             </collapsenames>
             <modelresponses>0</modelresponses>
+            <offset>0</offset>
             <inputstreams>
                 <stream>firstlevel_spm</stream>  
             </inputstreams>

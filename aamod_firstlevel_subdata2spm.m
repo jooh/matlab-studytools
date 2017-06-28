@@ -1,6 +1,4 @@
-% Generate names/onsets/durations struct array and save (where?). You must
-% provide the correct sessions, e.g. by branching. And all sessions must
-% include 'visobjlocaliser' to help us find the correct session number
+% [aap,resp]=aamod_firstlevel_subdata2spm(aap,task,subj)
 function [aap,resp]=aamod_firstlevel_subdata2spm(aap,task,subj)
 
 resp = '';
@@ -26,7 +24,7 @@ switch task
         spmpath = aas_getfiles_bystream(aap,subj,'firstlevel_spm');
         load(spmpath);
         SPM = subdata2spm(data,SPM,ts.duration,ts.ignorenames,...
-            ts.collapsenames,ts.modelresponses);
+            ts.collapsenames,ts.modelresponses,ts.offset);
         % save and describe
         save(spmpath,'SPM');
         aap = aas_desc_outputs(aap,subj,'firstlevel_spm',spmpath);

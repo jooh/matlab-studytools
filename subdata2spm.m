@@ -1,6 +1,6 @@
 % 
-% SPM = subdata2spm(subdata,SPM,duration,ignorenames,collapsenames,modelresponses)
-function SPM = subdata2spm(subdata,SPM,duration,ignorenames,collapsenames,modelresponses)
+% SPM = subdata2spm(subdata,SPM,duration,ignorenames,collapsenames,modelresponses,offset)
+function SPM = subdata2spm(subdata,SPM,duration,ignorenames,collapsenames,modelresponses,offset)
 
 if ieNotDefined('ignorenames')
     ignorenames = {'null'};
@@ -18,6 +18,10 @@ if ieNotDefined('modelresponses')
     modelresponses = false;
 elseif modelresponses
     error('not yet implemented')
+end
+
+if ieNotDefined('offset')
+    offset = 0;
 end
     
 nsub = length(subdata);
@@ -67,7 +71,6 @@ for sess = 1:nsub
         connames(end+1) = {collapsenames(cn).newname};
     end
         
-
     unames = intersect(connames,unique(names),'stable');
     
     if sess==1
@@ -95,7 +98,8 @@ for sess = 1:nsub
         end
         assert(sum(targetreg)==1,'more than one match for %s',...
             sessres.trials(t).condition.name);
-        SPM.Sess(sess).U(targetreg).ons(end+1) = sessres.trials(t).starttime;
+        SPM.Sess(sess).U(targetreg).ons(end+1) = ...
+            sessres.trials(t).starttime + offset;
         if isempty(duration)
             SPM.Sess(sess).U(targetreg).dur(end+1) = sessres.trials(t).starttime - sessres.trials(t+1).starttime;
         else
