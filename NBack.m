@@ -16,7 +16,10 @@ classdef NBack < Study
 
     methods
         function s = NBack(varargin)
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
             % use the right default response name
             if isempty(s.responsename)
                 s.responsename = 'responsecheck';

@@ -13,7 +13,10 @@ classdef FixationEvent < StudyEvent
     methods
         function s = FixationEvent(st,varargin)
         % Initialise event by populating fields, possibly making texture
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
             if isempty(s.radius)
                 radius = st.deg2px * 1/10;
             end

@@ -9,7 +9,10 @@ classdef FlipEvent < StudyEvent
 
     methods
         function s = FlipEvent(st,varargin)
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
             s.window = st.window;
         end
 

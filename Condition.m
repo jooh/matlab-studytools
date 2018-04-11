@@ -26,7 +26,10 @@ classdef Condition < hgsetget & dynamicprops
                 t = t([]);
                 return
             end
-            t = varargs2structfields(varargin,t);
+            sout = varargs2structfields(varargin,t);
+            for fn = fieldnames(sout)'
+                t.(fn{1}) = sout.(fn{1});
+            end
             t.studyevents = studyevents;
             % preallocate fields
             t.nevents = length(studyevents);

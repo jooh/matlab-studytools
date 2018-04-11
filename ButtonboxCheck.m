@@ -7,7 +7,10 @@ classdef ButtonboxCheck < ResponseCheck
 
     methods
         function s = ButtonboxCheck(varargin)
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
         end
 
         function [respkey,resptime] = checkkeys(self);

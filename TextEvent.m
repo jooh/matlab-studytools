@@ -17,7 +17,10 @@ classdef TextEvent < StudyEvent
                 return
             end
             s.textstr = textstr;
-            s = varargs2structfields(varargin,s,0);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
             % in principle we should use st.x and st.y here but
             % unfortunately DrawFormattedText is pretty dumb with placement
             % (x and y are for top left corner, not centre of text box) so

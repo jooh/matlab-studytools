@@ -12,7 +12,10 @@ classdef VideoEvent < StreamEvent
     methods
         function s = VideoEvent(vidframes,st,varargin)
         % Initialise event by populating fields, possibly making texture
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
             %s.videoframes = vidframes;
             s.window = st.window;
             if ieNotDefined('alpha')

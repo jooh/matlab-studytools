@@ -33,7 +33,7 @@ defs.suffix = '';
 defs.scantime = false;
 defs.forcesync = true;
 defs.tr = [];
-par = varargs2structfields(varargin,defs,defs.verbose);
+par = varargs2structfields(varargin,defs);
 
 if par.debug
     par.windowed = 1;

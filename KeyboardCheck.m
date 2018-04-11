@@ -7,7 +7,10 @@ classdef KeyboardCheck < ResponseCheck
 
     methods
         function s = KeyboardCheck(varargin)
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
             s.esc = KbName('escape');
             s.spacebar = KbName('space');
         end

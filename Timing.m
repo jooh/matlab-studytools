@@ -15,7 +15,10 @@ classdef Timing < hgsetget & dynamicprops
             if nargin==0
                 return
             end
-            t = varargs2structfields(varargin,t);
+            sout = varargs2structfields(varargin,t);
+            for fn = fieldnames(sout)'
+                t.(fn{1}) = sout.(fn{1});
+            end
         end
 
         function update(self,newtime)
