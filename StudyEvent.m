@@ -20,7 +20,10 @@ classdef StudyEvent < hgsetget & dynamicprops
                 % initialisation of inherited objects etc
                 return
             end
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
         end
     end
 

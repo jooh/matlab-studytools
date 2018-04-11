@@ -4,7 +4,10 @@ classdef TextVideoEvent < StreamEvent & TextEvent
     methods
         function s = TextVideoEvent(textstr,st,varargin)
             s.textstr = textstr;
-            s = varargs2structfields(varargin,s,0);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
             s.nframe = length(textstr);
             s.initialisetext(st);
             s.initialiseframes;

@@ -12,7 +12,10 @@ classdef ImageEvent < StudyEvent
     methods
         function s = ImageEvent(im,st,varargin)
         % Initialise event by populating fields, possibly making texture
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
             %s.image = im;
             s.window = st.window;
             if ieNotDefined('alpha')

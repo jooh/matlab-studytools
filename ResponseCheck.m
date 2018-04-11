@@ -12,7 +12,10 @@ classdef ResponseCheck < StudyEvent
             if nargin==0
                 return
             end
-            s = varargs2structfields(varargin,s);
+            sout = varargs2structfields(varargin,s);
+            for fn = fieldnames(sout)'
+                s.(fn{1}) = sout.(fn{1});
+            end
         end
 
         function call(self)

@@ -45,7 +45,10 @@ classdef StimulusSpace < hgsetget
                 end
             end
             % Insert any other nonstandard parameters
-            f = varargs2structfields(varargin,f);
+            sout = varargs2structfields(varargin,f);
+            for fn = fieldnames(sout)'
+                f.(fn{1}) = sout.(fn{1});
+            end
             % empty out array if initialising empty
             if f.nstim == 0
                 f.stimulus(1) = [];

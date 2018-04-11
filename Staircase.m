@@ -58,7 +58,10 @@ classdef Staircase < hgsetget
 
     methods
         function st = Staircase(nup,stepup,varargin)
-            st = varargs2structfields(varargin,st);
+            sout = varargs2structfields(varargin,st);
+            for fn = fieldnames(sout)'
+                st.(fn{1}) = sout.(fn{1});
+            end
             st.nup = nup;
             st.stepup = stepup;
             if isempty(st.stepdown)
